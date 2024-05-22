@@ -1,8 +1,8 @@
 {
   "files": {
-    "main.js": "/nihongo-react/static/js/main.e4c3c944.js",
-    "index.html": "/nihongo-react/index.html",
-    "main.e4c3c944.js.map": "/nihongo-react/static/js/main.e4c3c944.js.map"
+    "main.js": "/nihongoV3/static/js/main.e4c3c944.js",
+    "index.html": "/nihongoV3/index.html",
+    "main.e4c3c944.js.map": "/nihongoV3/static/js/main.e4c3c944.js.map"
   },
   "entrypoints": [
     "static/js/main.e4c3c944.js"
