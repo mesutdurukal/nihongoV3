@@ -53,16 +53,6 @@ nihongoV3/
 └── README.md           # This file
 ```
 
-## Configuration
-
-### Environment Variables
-
-Create a `.env` file in the root directory with the following variables:
-
-```
-REACT_APP_API_URL=http://localhost:3001
-```
-
 ## Version History
 
 | Version | Type | Description | Access |
