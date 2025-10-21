@@ -22,7 +22,6 @@ const getApiBaseUrl = () => {
 };
 
 const hostIp = getApiBaseUrl();
-let vocabSize;
 const myHeaders = new Headers();
 myHeaders.append("Content-Type", "application/json");
 
@@ -80,39 +79,53 @@ async function fetchStats() {
     }
 }
 
-async function fetchQuestion(questionId) {
-    try {
-        const response = await fetch(hostIp + 'kanji/' + questionId);
-        return await response.json();
-    } catch (error) {
-        console.error('Error fetching question:', error);
-        return null;
-    }
-}
-
-async function pickQuestion(questionMode) {
+async function pickQuestion(mode) {
     try {
         const response = await fetch(hostIp + 'kanji');
         const questions = await response.json();
         
-        // Filter questions based on the selected mode
-        let filteredQuestions = questions;
-        if (questionMode === 'weak') {
-            filteredQuestions = questions.filter(q => q.correct / q.total < 0.8);
-        } else if (questionMode === 'medium') {
-            filteredQuestions = questions.filter(q => q.correct / q.total >= 0.8 && q.correct / q.total < 0.95);
-        } else if (questionMode === 'strong') {
-            filteredQuestions = questions.filter(q => q.correct / q.total >= 0.95);
+        console.log(`Picking question in mode: ${mode}`); // Debug log
+        
+        if (mode === 'random') {
+            // For random mode, just pick a random question directly
+            const randomIndex = Math.floor(Math.random() * questions.length);
+            return questions[randomIndex];
         }
         
-        // If no questions match the filter, use all questions
-        if (filteredQuestions.length === 0) {
-            filteredQuestions = questions;
+        // For other modes, create a filtered copy of questions
+        let filteredQuestions = [...questions];
+        
+        if (mode === 'leastAnswered') {
+            // Sort by total attempts (ascending)
+            filteredQuestions.sort((a, b) => (a.total || 0) - (b.total || 0));
+            
+            // Get all questions with the minimum number of attempts
+            const minTotal = filteredQuestions[0]?.total || 0;
+            const leastAnswered = filteredQuestions.filter(q => (q.total || 0) === minTotal);
+            
+            // Return a random question from the least answered ones
+            return leastAnswered[Math.floor(Math.random() * leastAnswered.length)];
+            
+        } else if (mode === 'leastCorrect') {
+            // Calculate correct ratio for each question
+            const questionsWithRatio = filteredQuestions.map(q => ({
+                ...q,
+                ratio: (q.correct || 0) / ((q.total || 0) || 1)
+            }));
+            
+            // Sort by ratio (ascending)
+            questionsWithRatio.sort((a, b) => a.ratio - b.ratio);
+            
+            // Get all questions with the lowest ratio
+            const minRatio = questionsWithRatio[0]?.ratio || 0;
+            const leastCorrect = questionsWithRatio.filter(q => q.ratio === minRatio);
+            
+            // Return a random question from the least correct ones
+            return leastCorrect[Math.floor(Math.random() * leastCorrect.length)];
         }
         
-        // Select a random question
-        const randomIndex = Math.floor(Math.random() * filteredQuestions.length);
-        return filteredQuestions[randomIndex];
+        // Fallback: return a random question if mode is not recognized
+        return questions[Math.floor(Math.random() * questions.length)];
     } catch (error) {
         console.error('Error picking question:', error);
         return null;

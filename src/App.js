@@ -107,23 +107,40 @@ function Answer(props) {
 function Root() {
     const pickMode = ["leastAnswered", "leastCorrect", "random"];
     const initialStats =  {size: 0, global: { correct: 0, total: 0, record: 0 },  local: { correct: 0, total: 0, record: 0 }};
-    const [stats, setStats] = useState(  initialStats );
+    const [stats, setStats] = useState(initialStats);
     const [question, setQuestion] = useState({});
-    const [questionMode, setQuestionMode] = useState(2); // Initialize to 0
+    const [questionMode, setQuestionMode] = useState(0); // Start with first mode
 
     const resetStats = async () => {
         await refreshStats();
         await updateStatsCallBack();
     };
+    
     const updateStatsCallBack = async () => {
         const statsData = await fetchStats();
         setStats(statsData);
     };
+    
     const nextQuestion = async () => {
-        let newMode = (questionMode + 1) % pickMode.length;
-        setQuestionMode(newMode);
-        const nextQ = await pickQuestion(newMode);
-        setQuestion(nextQ);
+        try {
+            // First, move to the next mode
+            setQuestionMode(prevMode => {
+                const newMode = (prevMode + 1) % pickMode.length;
+                return newMode;
+            });
+            
+            // Then get the current mode (which is now the next mode)
+            const currentMode = pickMode[(questionMode + 1) % pickMode.length];
+            console.log('Current mode:', currentMode); // Debug log
+            
+            // Get next question using current mode
+            const nextQ = await pickQuestion(currentMode);
+            if (nextQ) {
+                setQuestion(nextQ);
+            }
+        } catch (error) {
+            console.error('Error getting next question:', error);
+        }
     };
 
     useEffect(() => {resetStats().then(nextQuestion)}, []);
