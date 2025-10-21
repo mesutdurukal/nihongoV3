@@ -1,5 +1,8 @@
 import React, { useState } from 'react';
-let hostIp = "http://localhost:8080/"; // Make sure this is correct and reachable
+// Use the current hostname for the API URL, which will work for both local and network access
+const hostname = window.location.hostname;
+const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+let hostIp = isLocalhost ? 'http://192.168.1.194:8080/' : `${window.location.protocol}//${window.location.hostname}:8080/`;
 let vocabSize;
 const myHeaders = new Headers();
 myHeaders.append("Content-Type", "application/json");
@@ -51,81 +54,62 @@ async function updateKanji(input) {
 async function fetchStats() {
     try {
         const response = await fetch(hostIp + 'stats');
-        const data = await response.json();
-        let results = "";
-        const order = ["size", "correct", "total", "record"];
-        order.forEach(key => {
-            if (data[key] !== undefined) {
-                results += `${key}: ${data[key]}, `;
-            }
-        });
-        vocabSize = data["size"];
-        return data;
+        return await response.json();
     } catch (error) {
         console.error('Error fetching stats:', error);
-        return "";
+        return null;
     }
 }
 
 async function fetchQuestion(questionId) {
     try {
         const response = await fetch(hostIp + 'kanji/' + questionId);
-        const r = await response.json();
-        return r;
+        return await response.json();
     } catch (error) {
-        console.error('Failed to fetch data:', error);
-        return 'Failed to fetch data';
+        console.error('Error fetching question:', error);
+        return null;
     }
 }
 
 async function pickQuestion(questionMode) {
-
-    let leastAsked = 0;    let leastCorrect = -0.1;
-
-    // LEAST ASKED
-    if (questionMode % 3 === 0) {
-        let next; let searchCount = 0; let currentAsked;
-        while (true) {
-            next = Math.floor(Math.random() * vocabSize) + 1;
-            const r = await fetchQuestion(next);
-            // How many times the currently picked question is asked
-            try {currentAsked = parseInt(r.total);if (isNaN(currentAsked)) currentAsked = 0;} catch (e) {currentAsked = 0;}
-            // Is it lower than the least? If so, return this question
-            if (leastAsked >= currentAsked) {leastAsked = currentAsked;return r;}
-            // if not, continue search. If already tried 2 times vocab size, increase the least and reset counter
-            if (searchCount++ > 2) {leastAsked++;searchCount = 0;}
+    try {
+        const response = await fetch(hostIp + 'kanji');
+        const questions = await response.json();
+        
+        // Filter questions based on the selected mode
+        let filteredQuestions = questions;
+        if (questionMode === 'weak') {
+            filteredQuestions = questions.filter(q => q.correct / q.total < 0.8);
+        } else if (questionMode === 'medium') {
+            filteredQuestions = questions.filter(q => q.correct / q.total >= 0.8 && q.correct / q.total < 0.95);
+        } else if (questionMode === 'strong') {
+            filteredQuestions = questions.filter(q => q.correct / q.total >= 0.95);
         }
-    }
-
-    // LEAST CORRECT
-    else if (questionMode % 3 == 1) {
-        let next; let currentMin; let couldNotFound = 0;
-        while (true) {
-            next = Math.floor(Math.random() * vocabSize) + 1;
-            const r = await fetchQuestion(next);
-            try {currentMin = parseFloat(r.percentage);} catch (e) {currentMin = 0;}
-            if ((leastCorrect >= currentMin) || isNaN(currentMin)) {leastCorrect = currentMin;return r;}
-            if (couldNotFound++ > vocabSize * 2) { leastCorrect = isNaN(leastCorrect) ? 0 : leastCorrect + 0.1; couldNotFound = 0; }
+        
+        // If no questions match the filter, use all questions
+        if (filteredQuestions.length === 0) {
+            filteredQuestions = questions;
         }
+        
+        // Select a random question
+        const randomIndex = Math.floor(Math.random() * filteredQuestions.length);
+        return filteredQuestions[randomIndex];
+    } catch (error) {
+        console.error('Error picking question:', error);
+        return null;
     }
-
-    // RANDOM
-    else
-        return await fetchQuestion(Math.floor(Math.random() * vocabSize) + 1);
-
 }
 
-function IP() {
-    const [ip, setIp] = useState(hostIp);  // Initialize the state with hostIp
-    const handleInputChange = (event) => {setIp(event.target.value); };
-    return (
-        <>
-            <input type="text" value={ip} onChange={handleInputChange} placeholder="Enter server IP"/>
-            <button onClick={()=>{hostIp = ip;}}>Set Server IP</button>
-            <button onClick={refreshStats}>Reset Local Stats</button><><br/></>
-            <label id="iplabel" style={{ fontFamily: "Arial, sans-serif", fontSize: "14px" }}>{ip}</label>
-        </>
-    );
+// Get the current IP address
+async function IP() {
+    try {
+        const response = await fetch('https://api.ipify.org?format=json');
+        const data = await response.json();
+        return data.ip;
+    } catch (error) {
+        console.error('Error getting IP:', error);
+        return null;
+    }
 }
 
-export {refreshStats, updateStats, fetchStats, updateKanji, pickQuestion, IP }
+export { refreshStats, updateStats, fetchStats, updateKanji, pickQuestion, IP };

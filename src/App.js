@@ -3,18 +3,34 @@ import {refreshStats, updateStats, fetchStats, pickQuestion, updateKanji, IP} fr
 import {getStyle} from "./Style";
 
 function Stats({stats}) {
-    return (<><div>
-        <span>Vocabulary Size: {stats.size}, </span>
-        <span>Accuracy Rate: {(stats.global.correct / stats.global.total).toFixed(4)}, </span>
-        <span>Record of Correct in a Row: {stats.global.record} </span>
-    </div>
-    <div>
-        <span>Correct in a Row: {stats.local.record}, </span>
-        <span>Accuracy Rate: {(stats.local.correct / stats.local.total).toFixed(4)}, </span>
-        <span>Correct: {stats.local.correct}, </span>
-        <span>Total: {stats.local.total}, </span>
+    // Provide default values if stats or its properties are undefined
+    const safeStats = stats || {
+        size: 0,
+        global: { correct: 0, total: 0, record: 0 },
+        local: { correct: 0, total: 0, record: 0 }
+    };
+    
+    const globalAccuracy = safeStats.global.total > 0 
+        ? (safeStats.global.correct / safeStats.global.total).toFixed(4)
+        : 0;
+        
+    const localAccuracy = safeStats.local.total > 0 
+        ? (safeStats.local.correct / safeStats.local.total).toFixed(4)
+        : 0;
 
-    </div><br /></>);
+    return (<>
+        <div>
+            <span>Vocabulary Size: {safeStats.size || 0}, </span>
+            <span>Accuracy Rate: {globalAccuracy}, </span>
+            <span>Record of Correct in a Row: {safeStats.global.record || 0} </span>
+        </div>
+        <div>
+            <span>Correct in a Row: {safeStats.local.record || 0}, </span>
+            <span>Accuracy Rate: {localAccuracy}, </span>
+            <span>Correct: {safeStats.local.correct || 0}, </span>
+            <span>Total: {safeStats.local.total || 0}, </span>
+        </div><br />
+    </>);
 }
 
 function QuestionMetaData({question, qMode}) {

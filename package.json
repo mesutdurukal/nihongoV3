@@ -1,6 +1,6 @@
 {
   "name": "my-react-project",
-  "homepage": "https://mesutdurukal.github.io/nihongoV3",
+  "homepage": "./",
   "version": "0.1.0",
   "private": true,
   "dependencies": {
@@ -21,7 +21,7 @@
     "start": "npm run start:server",
     "dev": "concurrently \"npm run start:server\" \"npm run start:react\"",
     "start:react": "react-scripts start",
-    "start:server": "json-server ./data/kanji.json --port 8080",
+    "start:server": "json-server --host 0.0.0.0 ./data/kanji.json --port 8080",
     "build": "react-scripts build",
     "test": "react-scripts test",
     "eject": "react-scripts eject",
