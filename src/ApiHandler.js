@@ -1,8 +1,27 @@
 import React, { useState } from 'react';
-// Use the current hostname for the API URL, which will work for both local and network access
-const hostname = window.location.hostname;
-const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
-let hostIp = isLocalhost ? 'http://192.168.1.194:8080/' : `${window.location.protocol}//${window.location.hostname}:8080/`;
+// Get API base URL
+const getApiBaseUrl = () => {
+  // Use REACT_APP_API_BASE_URL if defined in .env file
+  if (process.env.REACT_APP_API_BASE_URL) {
+    return process.env.REACT_APP_API_BASE_URL.endsWith('/') 
+      ? process.env.REACT_APP_API_BASE_URL 
+      : `${process.env.REACT_APP_API_BASE_URL}/`;
+  }
+  
+  const { hostname, protocol } = window.location;
+  const isLocalhost = hostname === 'localhost' || hostname === '127.0.0.1';
+  
+  if (isLocalhost) {
+    // In development, use the current hostname which will be localhost
+    // or the IP if accessed via network
+    return `${protocol}//${window.location.hostname}:8080/`;
+  }
+  
+  // In production, use the current host
+  return `${protocol}//${hostname}:8080/`;
+};
+
+const hostIp = getApiBaseUrl();
 let vocabSize;
 const myHeaders = new Headers();
 myHeaders.append("Content-Type", "application/json");
