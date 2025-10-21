@@ -19,7 +19,7 @@
   },
   "scripts": {
     "start": "npm run start:server",
-    "start2": "concurrently \"npm run start:server\" \"npm run start:react\"",
+    "dev": "concurrently \"npm run start:server\" \"npm run start:react\"",
     "start:react": "react-scripts start",
     "start:server": "json-server ./data/kanji.json --port 8080",
     "build": "react-scripts build",
