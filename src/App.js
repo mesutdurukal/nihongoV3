@@ -173,7 +173,7 @@ const IncorrectText = styled(ResultText)`
   color: #c92a2a;
 `;
 
-function Stats({ stats }) {
+function Stats({ stats, onReset }) {
     const safeStats = stats || {
         size: 0,
         global: { correct: 0, total: 0, record: 0 },
@@ -189,20 +189,32 @@ function Stats({ stats }) {
         : 0;
 
     return (
-        <StatsContainer>
-            <h2 style={{ marginTop: 0, color: '#2c3e50' }}>Stats</h2>
-            <StatRow>
-                <StatItem>Total: {safeStats.size}</StatItem>
-            </StatRow>
-            <StatRow>
-                <StatItem>Global: {safeStats.global.correct}/{safeStats.global.total} ({globalAccuracy}%)</StatItem>
-                <StatItem>Record: {safeStats.global.record}</StatItem>
-            </StatRow>
-            <StatRow>
-                <StatItem>Session: {safeStats.local.correct}/{safeStats.local.total} ({localAccuracy}%)</StatItem>
-                <StatItem>Record: {safeStats.local.record}</StatItem>
-            </StatRow>
-        </StatsContainer>
+        <div>
+            <StatsContainer>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                    <h2 style={{ margin: 0, color: '#2c3e50' }}>Stats</h2>
+                    <Button 
+                        onClick={onReset}
+                        style={{ 
+                            background: 'none', 
+                            border: '1px solid #dee2e6',
+                            color: '#6c757d',
+                            padding: '0.3rem 0.8rem',
+                            fontSize: '0.85rem'
+                        }}
+                    >
+                        Reset All Stats
+                    </Button>
+                </div>
+                <StatRow>
+                    <StatItem>Total: {safeStats.size}</StatItem>
+                    <StatItem>Global: {safeStats.global.correct}/{safeStats.global.total} ({globalAccuracy}%)</StatItem>
+                    <StatItem>Record: {safeStats.global.record}</StatItem>
+                    <StatItem>Session: {safeStats.local.correct}/{safeStats.local.total} ({localAccuracy}%)</StatItem>
+                    <StatItem>Session Record: {safeStats.local.record}</StatItem>
+                </StatRow>
+            </StatsContainer>
+        </div>
     );
 }
 
@@ -445,20 +457,7 @@ function Root() {
                 />
             </QuestionContainer>
             
-            <Stats stats={stats} />
-            
-            <div style={{ textAlign: 'center', marginTop: '1rem' }}>
-                <Button 
-                    onClick={resetStats}
-                    style={{ 
-                        background: 'none', 
-                        border: '1px solid #dee2e6',
-                        color: '#6c757d'
-                    }}
-                >
-                    Reset All Stats
-                </Button>
-            </div>
+            <Stats stats={stats} onReset={resetStats} />
         </Container>
     );
 }
