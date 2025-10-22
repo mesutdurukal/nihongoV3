@@ -428,11 +428,22 @@ function Root() {
 
     useEffect(() => {
         const initialize = async () => {
-            await resetStats();
-            await getNextQuestion();
+            try {
+                // Only reset stats if they don't exist
+                const currentStats = await fetchStats();
+                if (!currentStats || !currentStats.global) {
+                    await resetStats();
+                } else {
+                    // Keep the current stats
+                    setStats(currentStats);
+                }
+                await getNextQuestion();
+            } catch (error) {
+                console.error('Initialization error:', error);
+            }
         };
         initialize();
-    }, [getNextQuestion, resetStats]);
+    }, [getNextQuestion]); // Removed resetStats from dependencies
 
     if (isLoading) {
         return (

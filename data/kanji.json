@@ -7046,10 +7046,10 @@
       "kanji": "電話",
       "meaning": "phone,denwa",
       "correct": 12,
-      "total": 13,
+      "total": 14,
       "undef1": 0,
       "undef2": 0,
-      "percentage": 0.9230769231,
+      "percentage": 0.8571428571428571,
       "undef3": "#DIV/0!",
       "": "",
       "__1": "",
@@ -14470,7 +14470,7 @@
       "kanji": "続ける",
       "meaning": "continue,tsutzukeru",
       "correct": 0,
-      "total": 1,
+      "total": 2,
       "undef1": 0,
       "undef2": 0,
       "percentage": 0,
@@ -14478,7 +14478,8 @@
       "": "",
       "__1": "",
       "undef4": 0,
-      "undef5": 0
+      "undef5": 0,
+      "ratio": 0
     },
     {
       "id": 906,
@@ -15371,10 +15372,10 @@
       "kanji": "欠点",
       "meaning": "ketten,disadvantage",
       "correct": 0,
-      "total": 0,
+      "total": 1,
       "undef1": 0,
       "undef2": 0,
-      "percentage": "#DIV/0!",
+      "percentage": 0,
       "undef3": "#DIV/0!",
       "": "",
       "__1": "",
@@ -15675,12 +15676,12 @@
     "size": 979,
     "global": {
       "correct": 10210,
-      "total": 23767,
+      "total": 23770,
       "record": 57
     },
     "local": {
       "correct": 0,
-      "total": 0,
+      "total": 2,
       "record": 0
     }
   }
