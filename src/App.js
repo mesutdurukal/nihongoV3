@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { refreshStats, updateStats, fetchStats, pickQuestion, updateKanji } from './ApiHandler';
 
@@ -6,9 +6,17 @@ import { refreshStats, updateStats, fetchStats, pickQuestion, updateKanji } from
 const Container = styled.div`
   max-width: 800px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 1rem;
   font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
   color: #2c3e50;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  box-sizing: border-box;
+  
+  @media (max-width: 600px) {
+    padding: 0.5rem;
+  }
 `;
 
 const StatsContainer = styled.div`
@@ -28,36 +36,62 @@ const StatRow = styled.div`
 
 const StatItem = styled.span`
   background-color: #e9ecef;
-  padding: 0.5rem 1rem;
+  padding: 0.4rem 0.8rem;
   border-radius: 20px;
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   color: #495057;
+  white-space: nowrap;
+  
+  @media (max-width: 480px) {
+    padding: 0.3rem 0.6rem;
+    font-size: 0.8rem;
+  }
 `;
 
 const QuestionContainer = styled.div`
   background: white;
   border-radius: 8px;
-  padding: 2rem;
-  margin-bottom: 2rem;
+  padding: 1.5rem;
+  margin-bottom: 1rem;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   text-align: center;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  
+  @media (max-width: 600px) {
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+  }
 `;
 
 const QuestionText = styled.div`
   font-size: 3rem;
   font-weight: bold;
-  margin: 2rem 0;
+  margin: 1.5rem 0;
   color: #2c3e50;
   min-height: 4.5rem;
+  word-break: break-word;
+  
+  @media (max-width: 600px) {
+    font-size: 2.5rem;
+    margin: 1rem 0;
+  }
 `;
 
 const MetaData = styled.div`
   display: flex;
   justify-content: center;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
   color: #6c757d;
   font-size: 0.9rem;
+  
+  @media (max-width: 480px) {
+    gap: 0.5rem;
+    font-size: 0.8rem;
+  }
 `;
 
 const MetaItem = styled.span`
@@ -76,12 +110,19 @@ const Input = styled.input`
   font-size: 1rem;
   width: 100%;
   max-width: 400px;
+  margin: 0 auto;
+  box-sizing: border-box;
   transition: all 0.2s;
   
   &:focus {
     outline: none;
     border-color: #4dabf7;
     box-shadow: 0 0 0 3px rgba(77, 171, 247, 0.2);
+  }
+  
+  @media (max-width: 480px) {
+    padding: 0.6rem 1rem;
+    font-size: 0.9rem;
   }
 `;
 
@@ -391,8 +432,6 @@ function Root() {
 
     return (
         <Container>
-            <Stats stats={stats} />
-            
             <QuestionContainer>
                 <QuestionText>{question.kanji || '?'}</QuestionText>
                 <QuestionMetaData question={question} qMode={pickMode[questionMode]} />
@@ -405,6 +444,8 @@ function Root() {
                     nextQuestion={handleNextQuestion} 
                 />
             </QuestionContainer>
+            
+            <Stats stats={stats} />
             
             <div style={{ textAlign: 'center', marginTop: '1rem' }}>
                 <Button 
