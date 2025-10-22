@@ -1511,8 +1511,8 @@
       "meaning": "electric bill,denkidai",
       "kanjiToMeaning": {
         "correct": 8,
-        "total": 13,
-        "percentage": 0.6153846153846154
+        "total": 14,
+        "percentage": 0.5714285714285714
       },
       "meaningToKanji": {
         "correct": 0,
@@ -8567,8 +8567,8 @@
       "meaning": "umareru,be born",
       "kanjiToMeaning": {
         "correct": 12,
-        "total": 12,
-        "percentage": 1
+        "total": 13,
+        "percentage": 0.9230769230769231
       },
       "meaningToKanji": {
         "correct": 0,
@@ -15239,9 +15239,9 @@
       "kanji": "冷たい",
       "meaning": "tsumetai,cold",
       "kanjiToMeaning": {
-        "correct": 0,
-        "total": 1,
-        "percentage": 0
+        "correct": 1,
+        "total": 2,
+        "percentage": 0.5
       },
       "meaningToKanji": {
         "correct": 0,
@@ -15669,14 +15669,14 @@
   "stats": {
     "size": 979,
     "global": {
-      "correct": 10213,
-      "total": 23779,
+      "correct": 10214,
+      "total": 23782,
       "record": 57
     },
     "local": {
-      "correct": 0,
-      "total": 0,
-      "record": 0
+      "correct": 1,
+      "total": 3,
+      "record": 1
     }
   }
 }
