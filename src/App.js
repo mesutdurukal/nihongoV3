@@ -357,7 +357,7 @@ function Answer({ question, stats, setQuestion, setStats, nextQuestion }) {
                     </PrimaryButton>
                 </div>
             </div>
-            )}
+            )
         </div>
     );
 }
@@ -375,25 +375,25 @@ function Root() {
     const [questionMode, setQuestionMode] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
 
-    const resetStats = async () => {
-        try {
-            await refreshStats();
-            await updateStatsCallBack();
-        } catch (error) {
-            console.error('Error resetting stats:', error);
-        }
-    };
-    
-    const updateStatsCallBack = async () => {
+    const updateStatsCallBack = useCallback(async () => {
         try {
             const statsData = await fetchStats();
             setStats(statsData);
         } catch (error) {
             console.error('Error fetching stats:', error);
         }
-    };
+    }, []);
     
-    const getNextQuestion = async () => {
+    const resetStats = useCallback(async () => {
+        try {
+            await refreshStats();
+            await updateStatsCallBack();
+        } catch (error) {
+            console.error('Error resetting stats:', error);
+        }
+    }, [updateStatsCallBack]);
+    
+    const getNextQuestion = useCallback(async () => {
         try {
             const currentMode = pickMode[questionMode];
             const nextQ = await pickQuestion(currentMode);
@@ -405,7 +405,7 @@ function Root() {
         } finally {
             setIsLoading(false);
         }
-    };
+    }, [questionMode]);
 
     const handleNextQuestion = async () => {
         setIsLoading(true);
@@ -420,7 +420,7 @@ function Root() {
             await getNextQuestion();
         };
         initialize();
-    }, []);
+    }, [getNextQuestion, resetStats]);
 
     if (isLoading) {
         return (
