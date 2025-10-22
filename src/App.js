@@ -203,7 +203,7 @@ function Stats({ stats, onReset }) {
                             fontSize: '0.85rem'
                         }}
                     >
-                        Reset All Stats
+                        Reset Local Stats
                     </Button>
                 </div>
                 <StatRow>
@@ -369,7 +369,6 @@ function Answer({ question, stats, setQuestion, setStats, nextQuestion }) {
                     </PrimaryButton>
                 </div>
             </div>
-            )
         </div>
     );
 }
