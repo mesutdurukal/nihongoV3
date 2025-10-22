@@ -219,10 +219,13 @@ function Stats({ stats, onReset }) {
 }
 
 function QuestionMetaData({ question, qMode }) {
+    const stats = question.kanjiToMeaning || { correct: 0, total: 0, percentage: 0 };
+    const percentage = stats.total > 0 ? Math.round(stats.percentage * 100) : 0;
+    
     return (
         <MetaData>
             <MetaItem>🎯 {qMode}</MetaItem>
-            <MetaItem>✅ {question.correct || 0}/{question.total || 0}</MetaItem>
+            <MetaItem>✅ {stats.correct}/{stats.total} ({percentage}%)</MetaItem>
         </MetaData>
     );
 }
@@ -252,13 +255,16 @@ function Answer({ question, stats, setQuestion, setStats, nextQuestion }) {
         const updatedStats = { ...stats };
         updatedStats.local.total++;
         updatedStats.global.total++;
-        currentQ.total = (currentQ.total || 0) + 1;
+        
+        // Update kanjiToMeaning stats
+        const kanjiToMeaning = currentQ.kanjiToMeaning || { correct: 0, total: 0, percentage: 0 };
+        kanjiToMeaning.total++;
 
         if (isAnswerCorrect) {
             updatedStats.global.correct++;
             updatedStats.local.correct++;
             updatedStats.local.record++;
-            currentQ.correct = (currentQ.correct || 0) + 1;
+            kanjiToMeaning.correct++;
             
             if (updatedStats.local.record > updatedStats.global.record) {
                 updatedStats.global.record = updatedStats.local.record;
@@ -267,7 +273,8 @@ function Answer({ question, stats, setQuestion, setStats, nextQuestion }) {
             updatedStats.local.record = 0;
         }
         
-        currentQ.percentage = currentQ.correct / currentQ.total;
+        kanjiToMeaning.percentage = kanjiToMeaning.correct / kanjiToMeaning.total;
+        currentQ.kanjiToMeaning = kanjiToMeaning;
         
         // Update state
         setIsCorrect(isAnswerCorrect);

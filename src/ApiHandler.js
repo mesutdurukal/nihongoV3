@@ -96,22 +96,29 @@ async function pickQuestion(mode) {
         let filteredQuestions = [...questions];
         
         if (mode === 'leastAnswered') {
-            // Sort by total attempts (ascending)
-            filteredQuestions.sort((a, b) => (a.total || 0) - (b.total || 0));
+            // Sort by total attempts (ascending) for kanjiToMeaning
+            filteredQuestions.sort((a, b) => 
+                (a.kanjiToMeaning?.total || 0) - (b.kanjiToMeaning?.total || 0)
+            );
             
             // Get all questions with the minimum number of attempts
-            const minTotal = filteredQuestions[0]?.total || 0;
-            const leastAnswered = filteredQuestions.filter(q => (q.total || 0) === minTotal);
+            const minTotal = filteredQuestions[0]?.kanjiToMeaning?.total || 0;
+            const leastAnswered = filteredQuestions.filter(q => 
+                (q.kanjiToMeaning?.total || 0) === minTotal
+            );
             
             // Return a random question from the least answered ones
             return leastAnswered[Math.floor(Math.random() * leastAnswered.length)];
             
         } else if (mode === 'leastCorrect') {
-            // Calculate correct ratio for each question
-            const questionsWithRatio = filteredQuestions.map(q => ({
-                ...q,
-                ratio: (q.correct || 0) / ((q.total || 0) || 1)
-            }));
+            // Calculate correct ratio for each question based on kanjiToMeaning
+            const questionsWithRatio = filteredQuestions.map(q => {
+                const stats = q.kanjiToMeaning || { correct: 0, total: 0 };
+                return {
+                    ...q,
+                    ratio: stats.total > 0 ? (stats.correct / stats.total) : 0
+                };
+            });
             
             // Sort by ratio (ascending)
             questionsWithRatio.sort((a, b) => a.ratio - b.ratio);
