@@ -1,4 +1,3 @@
-import React, { useState } from 'react';
 // Get API base URL
 const getApiBaseUrl = () => {
   // Use REACT_APP_API_BASE_URL if defined in .env file
@@ -25,17 +24,35 @@ const hostIp = getApiBaseUrl();
 const myHeaders = new Headers();
 myHeaders.append("Content-Type", "application/json");
 
-async function refreshStats() {
+async function refreshStats(language = 'kanji') {
     return await updateStats({
         "local": {
             "correct": 0,
             "total": 0,
             "record": 0
         }
-    });
+    }, language);
 }
 
-async function updateStats(input) {
+async function updateStats(input, language = 'kanji') {
+    try {
+        const endpoint = language === 'dutch' ? 'dutch' : 'kanji';
+        const raw = JSON.stringify(input);
+        const requestOptions = {
+            method: "PATCH",
+            headers: myHeaders,
+            body: raw,
+            redirect: "follow"
+        };
+        const response = await fetch(hostIp + endpoint + '/stats', requestOptions);
+        return await response.json();
+    } catch (error) {
+        console.error('Error updating stats:', error);
+        return null;
+    }
+}
+
+async function updateKanji(input, language = 'kanji') {
     try {
         const raw = JSON.stringify(input);
         const requestOptions = {
@@ -44,34 +61,19 @@ async function updateStats(input) {
             body: raw,
             redirect: "follow"
         };
-        const response = await fetch(hostIp + 'stats', requestOptions);
+        const endpoint = language === 'dutch' ? 'dutch' : 'kanji';
+        const response = await fetch(hostIp + endpoint + '/' + input.id, requestOptions);
         return await response.json();
     } catch (error) {
-        console.error('Error refreshing stats:', error);
+        console.error('Error updating word:', error);
         return null;
     }
 }
 
-async function updateKanji(input) {
+async function fetchStats(language = 'kanji') {
     try {
-        const raw = JSON.stringify(input);
-        const requestOptions = {
-            method: "PATCH",
-            headers: myHeaders,
-            body: raw,
-            redirect: "follow"
-        };
-        const response = await fetch(hostIp + 'kanji/' + input.id, requestOptions);
-        return await response.json();
-    } catch (error) {
-        console.error('Error updating Kanji:', error);
-        return null;
-    }
-}
-
-async function fetchStats() {
-    try {
-        const response = await fetch(hostIp + 'stats');
+        const endpoint = language === 'dutch' ? 'dutch' : 'kanji';
+        const response = await fetch(hostIp + endpoint + '/stats');
         return await response.json();
     } catch (error) {
         console.error('Error fetching stats:', error);
@@ -79,12 +81,16 @@ async function fetchStats() {
     }
 }
 
-async function pickQuestion(mode) {
+async function pickQuestion(mode, language = 'kanji') {
     try {
-        const response = await fetch(hostIp + 'kanji');
+        const endpoint = language === 'dutch' ? 'dutch' : 'kanji';
+        const response = await fetch(hostIp + endpoint);
         const questions = await response.json();
         
-        console.log(`Picking question in mode: ${mode}`); // Debug log
+        console.log(`Picking question in mode: ${mode} for language: ${language}`); // Debug log
+        
+        // Determine the stats key based on language
+        const statsKey = language === 'dutch' ? 'dutch2en' : 'kanji2en';
         
         if (mode === 'random') {
             // For random mode, just pick a random question directly
@@ -96,24 +102,24 @@ async function pickQuestion(mode) {
         let filteredQuestions = [...questions];
         
         if (mode === 'leastAnswered') {
-            // Sort by total attempts (ascending) for kanjiToMeaning
+            // Sort by total attempts (ascending)
             filteredQuestions.sort((a, b) => 
-                (a.kanjiToMeaning?.total || 0) - (b.kanjiToMeaning?.total || 0)
+                (a[statsKey]?.total || 0) - (b[statsKey]?.total || 0)
             );
             
             // Get all questions with the minimum number of attempts
-            const minTotal = filteredQuestions[0]?.kanjiToMeaning?.total || 0;
+            const minTotal = filteredQuestions[0]?.[statsKey]?.total || 0;
             const leastAnswered = filteredQuestions.filter(q => 
-                (q.kanjiToMeaning?.total || 0) === minTotal
+                (q[statsKey]?.total || 0) === minTotal
             );
             
             // Return a random question from the least answered ones
             return leastAnswered[Math.floor(Math.random() * leastAnswered.length)];
             
         } else if (mode === 'leastCorrect') {
-            // Calculate correct ratio for each question based on kanjiToMeaning
+            // Calculate correct ratio for each question
             const questionsWithRatio = filteredQuestions.map(q => {
-                const stats = q.kanjiToMeaning || { correct: 0, total: 0 };
+                const stats = q[statsKey] || { correct: 0, total: 0 };
                 return {
                     ...q,
                     ratio: stats.total > 0 ? (stats.correct / stats.total) : 0

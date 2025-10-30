@@ -173,18 +173,41 @@ const IncorrectText = styled(ResultText)`
   color: #c92a2a;
 `;
 
+const LanguageSelector = styled.div`
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+  padding: 1rem;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+`;
+
+const LanguageButton = styled(Button)`
+  padding: 0.5rem 1.5rem;
+  background-color: ${props => props.active ? '#4dabf7' : 'white'};
+  color: ${props => props.active ? 'white' : '#6c757d'};
+  border: 2px solid ${props => props.active ? '#4dabf7' : '#dee2e6'};
+  font-weight: ${props => props.active ? '600' : '500'};
+  
+  &:hover {
+    border-color: #4dabf7;
+    background-color: ${props => props.active ? '#339af0' : '#f1f3f5'};
+  }
+`;
+
 function Stats({ stats, onReset }) {
-    const safeStats = stats || {
-        size: 0,
-        global: { correct: 0, total: 0, record: 0 },
-        local: { correct: 0, total: 0, record: 0 }
+    const safeStats = {
+        size: stats?.size || 0,
+        global: stats?.global || { correct: 0, total: 0, record: 0 },
+        local: stats?.local || { correct: 0, total: 0, record: 0 }
     };
     
-    const globalAccuracy = safeStats.global.total > 0 
+    const globalAccuracy = safeStats.global?.total > 0 
         ? Math.round((safeStats.global.correct / safeStats.global.total) * 100) 
         : 0;
     
-    const localAccuracy = safeStats.local.total > 0 
+    const localAccuracy = safeStats.local?.total > 0 
         ? Math.round((safeStats.local.correct / safeStats.local.total) * 100) 
         : 0;
 
@@ -207,7 +230,7 @@ function Stats({ stats, onReset }) {
                     </Button>
                 </div>
                 <StatRow>
-                    <StatItem>Total: {safeStats.size}</StatItem>
+                    <StatItem>Vocab: {safeStats.size}</StatItem>
                     <StatItem>Global: {safeStats.global.correct}/{safeStats.global.total} ({globalAccuracy}%)</StatItem>
                     <StatItem>Record: {safeStats.global.record}</StatItem>
                     <StatItem>Session: {safeStats.local.correct}/{safeStats.local.total} ({localAccuracy}%)</StatItem>
@@ -218,8 +241,9 @@ function Stats({ stats, onReset }) {
     );
 }
 
-function QuestionMetaData({ question, qMode }) {
-    const stats = question.kanjiToMeaning || { correct: 0, total: 0, percentage: 0 };
+function QuestionMetaData({ question, qMode, language, direction }) {
+    const statsKey = language === 'dutch' ? direction : 'kanji2en';
+    const stats = question[statsKey] || { correct: 0, total: 0, percentage: 0 };
     const percentage = stats.total > 0 ? Math.round(stats.percentage * 100) : 0;
     
     return (
@@ -230,15 +254,30 @@ function QuestionMetaData({ question, qMode }) {
     );
 }
 
-function Answer({ question, stats, setQuestion, setStats, nextQuestion }) {
+function Answer({ question, stats, setQuestion, setStats, nextQuestion, language, direction }) {
     const [userInput, setInput] = useState('');
     const [correctWords, setCorrectWords] = useState('');
     const [isCorrect, setIsCorrect] = useState(null);
     const [showResult, setShowResult] = useState(false);
 
+    // Reset answer state when direction or question changes
+    useEffect(() => {
+        setInput('');
+        setCorrectWords('');
+        setIsCorrect(null);
+        setShowResult(false);
+    }, [direction, question.id]);
+
     const checkAnswer = async () => {
         const currentQ = { ...question };
-        const trueWords = currentQ.meaning.split(',').map(word => word.trim());
+        // Determine which field to check based on language and direction
+        let meaningField;
+        if (language === 'dutch') {
+            meaningField = direction === 'dutch2en' ? 'en' : 'dutch';
+        } else {
+            meaningField = 'meaning';
+        }
+        const trueWords = currentQ[meaningField].split(',').map(word => word.trim());
         
         if (!userInput.trim()) {
             // Show answer without affecting stats
@@ -251,20 +290,34 @@ function Answer({ question, stats, setQuestion, setStats, nextQuestion }) {
         const userAnswer = userInput.trim().toLowerCase();
         const isAnswerCorrect = trueWords.some(word => word.toLowerCase() === userAnswer);
         
-        // Update stats
-        const updatedStats = { ...stats };
+        // Update stats with safe defaults
+        const updatedStats = {
+            size: stats?.size || 0,
+            global: {
+                correct: stats?.global?.correct || 0,
+                total: stats?.global?.total || 0,
+                record: stats?.global?.record || 0
+            },
+            local: {
+                correct: stats?.local?.correct || 0,
+                total: stats?.local?.total || 0,
+                record: stats?.local?.record || 0
+            }
+        };
+        
         updatedStats.local.total++;
         updatedStats.global.total++;
         
-        // Update kanjiToMeaning stats
-        const kanjiToMeaning = currentQ.kanjiToMeaning || { correct: 0, total: 0, percentage: 0 };
-        kanjiToMeaning.total++;
+        // Update stats based on language and direction
+        const statsKey = language === 'dutch' ? direction : 'kanji2en';
+        const wordStats = currentQ[statsKey] || { correct: 0, total: 0, percentage: 0 };
+        wordStats.total++;
 
         if (isAnswerCorrect) {
             updatedStats.global.correct++;
             updatedStats.local.correct++;
             updatedStats.local.record++;
-            kanjiToMeaning.correct++;
+            wordStats.correct++;
             
             if (updatedStats.local.record > updatedStats.global.record) {
                 updatedStats.global.record = updatedStats.local.record;
@@ -273,8 +326,8 @@ function Answer({ question, stats, setQuestion, setStats, nextQuestion }) {
             updatedStats.local.record = 0;
         }
         
-        kanjiToMeaning.percentage = kanjiToMeaning.correct / kanjiToMeaning.total;
-        currentQ.kanjiToMeaning = kanjiToMeaning;
+        wordStats.percentage = wordStats.correct / wordStats.total;
+        currentQ[statsKey] = wordStats;
         
         // Update state
         setIsCorrect(isAnswerCorrect);
@@ -285,8 +338,8 @@ function Answer({ question, stats, setQuestion, setStats, nextQuestion }) {
 
         // Update backend
         await Promise.all([
-            updateStats(updatedStats),
-            updateKanji(currentQ)
+            updateStats(updatedStats, language),
+            updateKanji(currentQ, language)
         ]);
     };
 
@@ -392,29 +445,31 @@ function Root() {
     const [question, setQuestion] = useState({});
     const [questionMode, setQuestionMode] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
+    const [language, setLanguage] = useState('kanji');
+    const [direction, setDirection] = useState('dutch2en'); // dutch2en or en2dutch
 
     const updateStatsCallBack = useCallback(async () => {
         try {
-            const statsData = await fetchStats();
+            const statsData = await fetchStats(language);
             setStats(statsData);
         } catch (error) {
             console.error('Error fetching stats:', error);
         }
-    }, []);
+    }, [language]);
     
     const resetStats = useCallback(async () => {
         try {
-            await refreshStats();
+            await refreshStats(language);
             await updateStatsCallBack();
         } catch (error) {
             console.error('Error resetting stats:', error);
         }
-    }, [updateStatsCallBack]);
+    }, [updateStatsCallBack, language]);
     
     const getNextQuestion = useCallback(async () => {
         try {
             const currentMode = pickMode[questionMode];
-            const nextQ = await pickQuestion(currentMode);
+            const nextQ = await pickQuestion(currentMode, language);
             if (nextQ) {
                 setQuestion(nextQ);
             }
@@ -423,7 +478,7 @@ function Root() {
         } finally {
             setIsLoading(false);
         }
-    }, [questionMode]);
+    }, [questionMode, language]);
 
     const handleNextQuestion = async () => {
         setIsLoading(true);
@@ -435,8 +490,9 @@ function Root() {
     useEffect(() => {
         const initialize = async () => {
             try {
+                setIsLoading(true);
                 // Only reset stats if they don't exist
-                const currentStats = await fetchStats();
+                const currentStats = await fetchStats(language);
                 if (!currentStats || !currentStats.global) {
                     await resetStats();
                 } else {
@@ -449,7 +505,8 @@ function Root() {
             }
         };
         initialize();
-    }, [getNextQuestion]); // Removed resetStats from dependencies
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [language]); // Re-initialize when language changes
 
     if (isLoading) {
         return (
@@ -459,18 +516,63 @@ function Root() {
         );
     }
 
+    const handleLanguageChange = (newLanguage) => {
+        if (newLanguage !== language) {
+            setLanguage(newLanguage);
+        }
+    };
+
     return (
         <Container>
+            <LanguageSelector>
+                <LanguageButton 
+                    active={language === 'kanji'}
+                    onClick={() => handleLanguageChange('kanji')}
+                >
+                    🇯🇵 Kanji
+                </LanguageButton>
+                <LanguageButton 
+                    active={language === 'dutch'}
+                    onClick={() => handleLanguageChange('dutch')}
+                >
+                    🇳🇱 Dutch
+                </LanguageButton>
+            </LanguageSelector>
+            
+            {language === 'dutch' && (
+                <LanguageSelector style={{ marginTop: '-1rem' }}>
+                    <LanguageButton 
+                        active={direction === 'dutch2en'}
+                        onClick={() => setDirection('dutch2en')}
+                    >
+                        🇳🇱 → 🇬🇧 Dutch to English
+                    </LanguageButton>
+                    <LanguageButton 
+                        active={direction === 'en2dutch'}
+                        onClick={() => setDirection('en2dutch')}
+                    >
+                        🇬🇧 → 🇳🇱 English to Dutch
+                    </LanguageButton>
+                </LanguageSelector>
+            )}
+            
             <QuestionContainer>
-                <QuestionText>{question.kanji || '?'}</QuestionText>
-                <QuestionMetaData question={question} qMode={pickMode[questionMode]} />
+                <QuestionText>
+                    {language === 'dutch' 
+                        ? (direction === 'dutch2en' ? question.dutch : question.en)
+                        : question.kanji
+                    } {question.kanji || question.dutch || question.en ? '' : '?'}
+                </QuestionText>
+                <QuestionMetaData question={question} qMode={pickMode[questionMode]} language={language} direction={direction} />
                 
                 <Answer 
                     question={question} 
                     setQuestion={setQuestion} 
                     stats={stats} 
                     setStats={setStats} 
-                    nextQuestion={handleNextQuestion} 
+                    nextQuestion={handleNextQuestion}
+                    language={language}
+                    direction={direction}
                 />
             </QuestionContainer>
             

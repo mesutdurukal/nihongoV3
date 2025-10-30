@@ -4,9 +4,11 @@ A comprehensive Japanese language learning application with React frontend and J
 
 ## Features
 
-- Kanji study and practice
-- Vocabulary tracking
-- Progress statistics
+- **Multi-language support**: Choose between Japanese (Kanji) and Dutch
+- Vocabulary study and practice
+- Progress tracking with statistics
+- Smart question selection (least answered, least correct, random)
+- Session and global statistics
 - Multiple deployment options (local, ngrok, production)
 
 ## Getting Started
@@ -35,11 +37,11 @@ A comprehensive Japanese language learning application with React frontend and J
 
 1. Start both the backend and frontend with a single command:
    ```bash
-   npm run dev
+   npm start
    ```
    This will concurrently start:
-   - JSON server backend
-   - React development server
+   - Custom Node.js backend server (port 8080)
+   - React development server (port 3000)
 
 2. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
@@ -106,8 +108,23 @@ nihongoV3/
 
 This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
-## Next
-* Language support 
-  * selection: start with execution arguments or select from fe
-  * no kanji: both ways
-* Deploy BE Separately 
+## Language Support
+
+The app now supports multiple languages:
+- **Japanese (Kanji)**: Learn Japanese characters and their meanings
+- **Dutch**: Learn Dutch vocabulary
+
+Switch between languages using the language selector at the top of the app. Each language maintains separate statistics and progress tracking.
+
+### Adding More Languages
+
+To add a new language:
+1. Create a new JSON file in `/data/` (e.g., `spanish.json`)
+2. Follow the structure of `dutch.json` with `word`, `meaning`, and stats fields
+3. Update `server.js` to add routes for the new language
+4. Update `ApiHandler.js` to handle the new language endpoint
+5. Add a language button in `App.js`
+
+## Next Steps
+* Add more Dutch vocabulary
+* Deploy BE Separately
