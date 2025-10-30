@@ -63,7 +63,8 @@ nihongoV3/
 | v2.0.0 | SpringBoot BE + HTML FE | Initial web version | Localhost access |
 | v2.1.0 | - | Upgraded to React frontend | Localhost access |
 | v2.2.0 | - | Added ngrok support | Public access when ngrok is running |
-| v3.0.0 | React + JSON Server | Combined BE & FE on same server | Localhost access without CORS |
+| v3.0.0 | React + JSON Server | Combined BE & FE on same server, Added Dutch language | Localhost access without CORS |
+| v4.0.0 | React + Vercel Serverless | Deployed to GitHub Pages & Vercel, 100 Dutch words, Bidirectional learning | Public access (GitHub Pages + Vercel) |
 
 ### v3.0.0 - Current Version
 - Combined React frontend with JSON server backend

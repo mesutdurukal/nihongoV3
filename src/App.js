@@ -459,8 +459,13 @@ function Root() {
     
     const resetStats = useCallback(async () => {
         try {
-            await refreshStats(language);
-            await updateStatsCallBack();
+            const resetResult = await refreshStats(language);
+            if (resetResult) {
+                setStats(resetResult);
+            } else {
+                // Fallback: refetch stats
+                await updateStatsCallBack();
+            }
         } catch (error) {
             console.error('Error resetting stats:', error);
         }

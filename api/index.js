@@ -45,10 +45,22 @@ app.get('/api/kanji/stats', (req, res) => {
 });
 
 app.patch('/api/kanji/stats', (req, res) => {
-  const kanjiData = JSON.parse(fs.readFileSync(kanjiPath, 'utf-8'));
-  kanjiData.stats = { ...kanjiData.stats, ...req.body };
-  fs.writeFileSync(kanjiPath, JSON.stringify(kanjiData, null, 2));
-  res.json(kanjiData.stats);
+  try {
+    const kanjiData = JSON.parse(fs.readFileSync(kanjiPath, 'utf-8'));
+    const updatedStats = { ...kanjiData.stats, ...req.body };
+    
+    // Try to write, but don't fail if it doesn't work (Vercel read-only FS)
+    try {
+      fs.writeFileSync(kanjiPath, JSON.stringify({ ...kanjiData, stats: updatedStats }, null, 2));
+    } catch (writeError) {
+      console.log('Cannot persist stats (read-only filesystem):', writeError.message);
+    }
+    
+    res.json(updatedStats);
+  } catch (error) {
+    console.error('Error updating stats:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.get('/api/kanji', (req, res) => {
@@ -67,14 +79,27 @@ app.get('/api/kanji/:id', (req, res) => {
 });
 
 app.patch('/api/kanji/:id', (req, res) => {
-  const kanjiData = JSON.parse(fs.readFileSync(kanjiPath, 'utf-8'));
-  const index = kanjiData.kanji.findIndex(k => k.id === parseInt(req.params.id));
-  if (index !== -1) {
-    kanjiData.kanji[index] = { ...kanjiData.kanji[index], ...req.body };
-    fs.writeFileSync(kanjiPath, JSON.stringify(kanjiData, null, 2));
-    res.json(kanjiData.kanji[index]);
-  } else {
-    res.status(404).json({ error: 'Not found' });
+  try {
+    const kanjiData = JSON.parse(fs.readFileSync(kanjiPath, 'utf-8'));
+    const index = kanjiData.kanji.findIndex(k => k.id === parseInt(req.params.id));
+    if (index !== -1) {
+      const updatedItem = { ...kanjiData.kanji[index], ...req.body };
+      
+      // Try to write, but don't fail if it doesn't work
+      try {
+        kanjiData.kanji[index] = updatedItem;
+        fs.writeFileSync(kanjiPath, JSON.stringify(kanjiData, null, 2));
+      } catch (writeError) {
+        console.log('Cannot persist kanji update (read-only filesystem):', writeError.message);
+      }
+      
+      res.json(updatedItem);
+    } else {
+      res.status(404).json({ error: 'Not found' });
+    }
+  } catch (error) {
+    console.error('Error updating kanji:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
@@ -85,10 +110,21 @@ app.get('/api/dutch/stats', (req, res) => {
 });
 
 app.patch('/api/dutch/stats', (req, res) => {
-  const dutchData = JSON.parse(fs.readFileSync(dutchPath, 'utf-8'));
-  dutchData.stats = { ...dutchData.stats, ...req.body };
-  fs.writeFileSync(dutchPath, JSON.stringify(dutchData, null, 2));
-  res.json(dutchData.stats);
+  try {
+    const dutchData = JSON.parse(fs.readFileSync(dutchPath, 'utf-8'));
+    const updatedStats = { ...dutchData.stats, ...req.body };
+    
+    try {
+      fs.writeFileSync(dutchPath, JSON.stringify({ ...dutchData, stats: updatedStats }, null, 2));
+    } catch (writeError) {
+      console.log('Cannot persist stats (read-only filesystem):', writeError.message);
+    }
+    
+    res.json(updatedStats);
+  } catch (error) {
+    console.error('Error updating stats:', error);
+    res.status(500).json({ error: error.message });
+  }
 });
 
 app.get('/api/dutch', (req, res) => {
@@ -108,13 +144,25 @@ app.get('/api/dutch/:id', (req, res) => {
 });
 
 app.patch('/api/dutch/:id', (req, res) => {
-  const dutchData = JSON.parse(fs.readFileSync(dutchPath, 'utf-8'));
-  if (dutchData[req.params.id]) {
-    dutchData[req.params.id] = { ...dutchData[req.params.id], ...req.body };
-    fs.writeFileSync(dutchPath, JSON.stringify(dutchData, null, 2));
-    res.json(dutchData[req.params.id]);
-  } else {
-    res.status(404).json({ error: 'Not found' });
+  try {
+    const dutchData = JSON.parse(fs.readFileSync(dutchPath, 'utf-8'));
+    if (dutchData[req.params.id]) {
+      const updatedItem = { ...dutchData[req.params.id], ...req.body };
+      
+      try {
+        dutchData[req.params.id] = updatedItem;
+        fs.writeFileSync(dutchPath, JSON.stringify(dutchData, null, 2));
+      } catch (writeError) {
+        console.log('Cannot persist dutch update (read-only filesystem):', writeError.message);
+      }
+      
+      res.json(updatedItem);
+    } else {
+      res.status(404).json({ error: 'Not found' });
+    }
+  } catch (error) {
+    console.error('Error updating dutch:', error);
+    res.status(500).json({ error: error.message });
   }
 });
 
