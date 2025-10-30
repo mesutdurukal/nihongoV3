@@ -66,7 +66,10 @@ nihongoV3/
 | v3.0.0 | React + JSON Server | Combined BE & FE on same server, Added Dutch language | Localhost access without CORS |
 | v4.0.0 | React + Vercel Serverless | Deployed to GitHub Pages & Vercel, 100 Dutch words, Bidirectional learning | Public access (GitHub Pages + Vercel) |
 
-### v3.0.0 - Current Version
+### v4.0.0 - Current Version
+- Fe on GH Pages, BE on Vercel. App is globally accessible. 
+
+### v3.0.0 - Fe & Be on the same server
 - Combined React frontend with JSON server backend
 - Single server for both BE & FE
 - No CORS issues
@@ -126,7 +129,7 @@ To add a new language:
 
 ### Live App
 - **Frontend**: https://mesutdurukal.github.io/nihongoV3
-- **Backend**: Deployed on Vercel
+- **Backend**: https://nihongo-v3.vercel.app/
 
 ### Deploy Your Own Instance
 
@@ -134,6 +137,29 @@ See [DEPLOY_STEPS.md](DEPLOY_STEPS.md) for quick deployment instructions or [DEP
 
 **Quick Steps:**
 1. Deploy backend: `vercel --prod`
-2. Update `.env.production` with your Vercel URL
-3. Deploy frontend: `npm run deploy`
+2. Deploy frontend: `npm run deploy`
 
+## Summary
+
+The frontend is running on GitHub Pages. GH Pages can run only static content, so the backend is running on Vercel.
+Pushing the last commit to github does not update the runnign app on GH Pages because deployment is not attached to the commits.
+Similarly, deploying to GH Pages does not update your code on github repo.
+
+- Update code; `git add .;git commit -m "new commit";git push`
+- Update running app (deploy): `npm run deploy`
+- Deploying backend is done with: `vercel --prod`
+
+Vercel detects the api folder and deploys it as a serverless function. After each deployment the be is accessible on a different 
+URL like nihongo-v3-8x26bhajt-mesuts-projects-7d02fdcb.vercel.app. But even after URL changes, fe does not need to be updated to
+point the new URL, because all new URLs use the same alias: REACT_APP_API_BASE_URL=https://nihongo-v3.vercel.app
+That is defined in .env.production file. So, the app running on GitHub Pages can still access the backend.
+
+Endpoints:
+https://nihongo-v3.vercel.app/api/test
+https://nihongo-v3.vercel.app/api/kanji/stats
+https://nihongo-v3.vercel.app/api/kanji/1
+https://nihongo-v3.vercel.app/api/dutch/stats
+https://nihongo-v3.vercel.app/api/dutch/1
+
+If you want to work locally, run `npm start`. Both fe and be will start locally and you can access the app on 
+http://localhost:3000/nihongoV3 
