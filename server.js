@@ -1,6 +1,7 @@
 const jsonServer = require('json-server');
 const path = require('path');
 const fs = require('fs');
+const cors = require('cors');
 
 const server = jsonServer.create();
 const middlewares = jsonServer.defaults({
@@ -14,6 +15,27 @@ const dutchPath = path.join(__dirname, 'data', 'dutch.json');
 // Load data
 let kanjiData = JSON.parse(fs.readFileSync(kanjiPath, 'utf-8'));
 let dutchData = JSON.parse(fs.readFileSync(dutchPath, 'utf-8'));
+
+// CORS configuration
+const allowedOrigins = [
+  'http://localhost:3000',
+  'https://mesutdurukal.github.io'
+];
+
+server.use(cors({
+  origin: function(origin, callback) {
+    // Allow requests with no origin (like mobile apps or curl requests)
+    if (!origin) return callback(null, true);
+    
+    if (allowedOrigins.indexOf(origin) !== -1) {
+      callback(null, true);
+    } else {
+      console.log('Blocked by CORS:', origin);
+      callback(new Error('Not allowed by CORS'));
+    }
+  },
+  credentials: true
+}));
 
 // Middleware
 server.use(middlewares);

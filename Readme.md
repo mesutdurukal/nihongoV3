@@ -125,6 +125,22 @@ To add a new language:
 4. Update `ApiHandler.js` to handle the new language endpoint
 5. Add a language button in `App.js`
 
+## Deployment
+
+### Live App
+- **Frontend**: https://mesutdurukal.github.io/nihongoV3
+- **Backend**: Deployed on Vercel
+
+### Deploy Your Own Instance
+
+See [DEPLOY_STEPS.md](DEPLOY_STEPS.md) for quick deployment instructions or [DEPLOYMENT.md](DEPLOYMENT.md) for detailed guide.
+
+**Quick Steps:**
+1. Deploy backend: `vercel --prod`
+2. Update `.env.production` with your Vercel URL
+3. Deploy frontend: `npm run deploy`
+
 ## Next Steps
 * Add more Dutch vocabulary
-* Deploy BE Separately
+* Add database for persistent storage
+* Add more languages (Spanish, French, etc.)
