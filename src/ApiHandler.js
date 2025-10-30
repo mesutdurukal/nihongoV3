@@ -21,17 +21,33 @@ const getApiBaseUrl = () => {
 };
 
 const hostIp = getApiBaseUrl();
+console.log('API Base URL:', hostIp);
+console.log('Environment:', process.env.NODE_ENV);
+console.log('REACT_APP_API_BASE_URL:', process.env.REACT_APP_API_BASE_URL);
+
 const myHeaders = new Headers();
 myHeaders.append("Content-Type", "application/json");
 
 async function refreshStats(language = 'kanji') {
-    return await updateStats({
-        "local": {
-            "correct": 0,
-            "total": 0,
-            "record": 0
-        }
-    }, language);
+    try {
+        // First fetch current stats to preserve global stats
+        const currentStats = await fetchStats(language);
+        
+        // Reset only local stats, keep global stats
+        const updatedStats = {
+            ...currentStats,
+            local: {
+                correct: 0,
+                total: 0,
+                record: 0
+            }
+        };
+        
+        return await updateStats(updatedStats, language);
+    } catch (error) {
+        console.error('Error refreshing stats:', error);
+        return null;
+    }
 }
 
 async function updateStats(input, language = 'kanji') {
@@ -44,7 +60,7 @@ async function updateStats(input, language = 'kanji') {
             body: raw,
             redirect: "follow"
         };
-        const response = await fetch(hostIp + endpoint + '/stats', requestOptions);
+        const response = await fetch(hostIp + 'api/' + endpoint + '/stats', requestOptions);
         return await response.json();
     } catch (error) {
         console.error('Error updating stats:', error);
@@ -55,14 +71,17 @@ async function updateStats(input, language = 'kanji') {
 async function updateKanji(input, language = 'kanji') {
     try {
         const raw = JSON.stringify(input);
+        const { id, ...rest } = input;
         const requestOptions = {
             method: "PATCH",
             headers: myHeaders,
-            body: raw,
+            body: JSON.stringify(rest),
             redirect: "follow"
         };
         const endpoint = language === 'dutch' ? 'dutch' : 'kanji';
-        const response = await fetch(hostIp + endpoint + '/' + input.id, requestOptions);
+        const url = hostIp + 'api/' + endpoint + '/' + id;
+        console.log('Updating word at:', url); // Debug log
+        const response = await fetch(url, requestOptions);
         return await response.json();
     } catch (error) {
         console.error('Error updating word:', error);
@@ -73,7 +92,7 @@ async function updateKanji(input, language = 'kanji') {
 async function fetchStats(language = 'kanji') {
     try {
         const endpoint = language === 'dutch' ? 'dutch' : 'kanji';
-        const response = await fetch(hostIp + endpoint + '/stats');
+        const response = await fetch(hostIp + 'api/' + endpoint + '/stats');
         return await response.json();
     } catch (error) {
         console.error('Error fetching stats:', error);
@@ -84,7 +103,7 @@ async function fetchStats(language = 'kanji') {
 async function pickQuestion(mode, language = 'kanji') {
     try {
         const endpoint = language === 'dutch' ? 'dutch' : 'kanji';
-        const response = await fetch(hostIp + endpoint);
+        const response = await fetch(hostIp + 'api/' + endpoint);
         const questions = await response.json();
         
         console.log(`Picking question in mode: ${mode} for language: ${language}`); // Debug log

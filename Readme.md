@@ -1,6 +1,6 @@
-# NihongoV3 - Japanese Language Learning Tool
+# Language Learning Tool
 
-A comprehensive Japanese language learning application with React frontend and JSON server backend.
+A comprehensive language learning application with React frontend and JSON server backend.
 
 ## Features
 
@@ -104,10 +104,6 @@ nihongoV3/
 4. Push to the branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-## License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
 ## Language Support
 
 The app now supports multiple languages:
@@ -140,7 +136,3 @@ See [DEPLOY_STEPS.md](DEPLOY_STEPS.md) for quick deployment instructions or [DEP
 2. Update `.env.production` with your Vercel URL
 3. Deploy frontend: `npm run deploy`
 
-## Next Steps
-* Add more Dutch vocabulary
-* Add database for persistent storage
-* Add more languages (Spanish, French, etc.)

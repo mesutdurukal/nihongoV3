@@ -5,7 +5,7 @@ const cors = require('cors');
 
 const server = jsonServer.create();
 const middlewares = jsonServer.defaults({
-  noCors: false
+  noCors: true  // Disable json-server's CORS to use our custom one
 });
 
 // Paths to data files
@@ -19,25 +19,33 @@ let dutchData = JSON.parse(fs.readFileSync(dutchPath, 'utf-8'));
 // CORS configuration
 const allowedOrigins = [
   'http://localhost:3000',
-  'https://mesutdurukal.github.io'
+  'https://mesutdurukal.github.io',
+  'https://mesutdurukal.github.io/nihongoV3'
 ];
 
+// CORS must be first
 server.use(cors({
   origin: function(origin, callback) {
+    console.log('Request from origin:', origin);
+    
     // Allow requests with no origin (like mobile apps or curl requests)
     if (!origin) return callback(null, true);
     
-    if (allowedOrigins.indexOf(origin) !== -1) {
+    // Allow localhost and github.io domains
+    if (origin.includes('localhost') || origin.includes('mesutdurukal.github.io')) {
+      console.log('Allowing origin:', origin);
       callback(null, true);
     } else {
       console.log('Blocked by CORS:', origin);
-      callback(new Error('Not allowed by CORS'));
+      callback(null, false);
     }
   },
-  credentials: true
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With']
 }));
 
-// Middleware
+// Then other middleware
 server.use(middlewares);
 server.use(jsonServer.bodyParser);
 
@@ -48,17 +56,17 @@ server.use((req, res, next) => {
 });
 
 // Test endpoint
-server.get('/test', (req, res) => {
+server.get('/api/test', (req, res) => {
   res.json({ message: 'Server is working!', ip: req.ip, host: req.get('host') });
 });
 
 // Stats endpoints for kanji (must be before :id routes)
-server.get('/kanji/stats', (req, res) => {
+server.get('/api/kanji/stats', (req, res) => {
   kanjiData = JSON.parse(fs.readFileSync(kanjiPath, 'utf-8'));
   res.json(kanjiData.stats);
 });
 
-server.patch('/kanji/stats', (req, res) => {
+server.patch('/api/kanji/stats', (req, res) => {
   kanjiData = JSON.parse(fs.readFileSync(kanjiPath, 'utf-8'));
   kanjiData.stats = { ...kanjiData.stats, ...req.body };
   fs.writeFileSync(kanjiPath, JSON.stringify(kanjiData, null, 2));
@@ -66,12 +74,12 @@ server.patch('/kanji/stats', (req, res) => {
 });
 
 // Custom routes for kanji
-server.get('/kanji', (req, res) => {
+server.get('/api/kanji', (req, res) => {
   kanjiData = JSON.parse(fs.readFileSync(kanjiPath, 'utf-8'));
   res.json(kanjiData.kanji);
 });
 
-server.get('/kanji/:id', (req, res) => {
+server.get('/api/kanji/:id', (req, res) => {
   kanjiData = JSON.parse(fs.readFileSync(kanjiPath, 'utf-8'));
   const item = kanjiData.kanji.find(k => k.id === parseInt(req.params.id));
   if (item) {
@@ -81,7 +89,7 @@ server.get('/kanji/:id', (req, res) => {
   }
 });
 
-server.patch('/kanji/:id', (req, res) => {
+server.patch('/api/kanji/:id', (req, res) => {
   kanjiData = JSON.parse(fs.readFileSync(kanjiPath, 'utf-8'));
   const index = kanjiData.kanji.findIndex(k => k.id === parseInt(req.params.id));
   if (index !== -1) {
@@ -100,12 +108,12 @@ server.put('/kanji', (req, res) => {
 });
 
 // Stats endpoints for dutch (must be before :id routes)
-server.get('/dutch/stats', (req, res) => {
+server.get('/api/dutch/stats', (req, res) => {
   dutchData = JSON.parse(fs.readFileSync(dutchPath, 'utf-8'));
   res.json(dutchData.stats);
 });
 
-server.patch('/dutch/stats', (req, res) => {
+server.patch('/api/dutch/stats', (req, res) => {
   dutchData = JSON.parse(fs.readFileSync(dutchPath, 'utf-8'));
   dutchData.stats = { ...dutchData.stats, ...req.body };
   fs.writeFileSync(dutchPath, JSON.stringify(dutchData, null, 2));
@@ -113,7 +121,7 @@ server.patch('/dutch/stats', (req, res) => {
 });
 
 // Custom routes for dutch
-server.get('/dutch', (req, res) => {
+server.get('/api/dutch', (req, res) => {
   dutchData = JSON.parse(fs.readFileSync(dutchPath, 'utf-8'));
   // Handle both array format and object format
   let dutchArray = Array.isArray(dutchData.dutch) 
@@ -122,7 +130,7 @@ server.get('/dutch', (req, res) => {
   res.json(dutchArray);
 });
 
-server.get('/dutch/:id', (req, res) => {
+server.get('/api/dutch/:id', (req, res) => {
   dutchData = JSON.parse(fs.readFileSync(dutchPath, 'utf-8'));
   let dutchArray = Array.isArray(dutchData.dutch) 
     ? dutchData.dutch 
@@ -135,7 +143,7 @@ server.get('/dutch/:id', (req, res) => {
   }
 });
 
-server.patch('/dutch/:id', (req, res) => {
+server.patch('/api/dutch/:id', (req, res) => {
   dutchData = JSON.parse(fs.readFileSync(dutchPath, 'utf-8'));
   let dutchArray = Array.isArray(dutchData.dutch) 
     ? dutchData.dutch 
@@ -166,4 +174,12 @@ server.put('/dutch', (req, res) => {
 const PORT = 8080;
 const HOST = '0.0.0.0';
 
-server.listen(PORT, HOST, () => {});
+// For local development
+if (process.env.NODE_ENV !== 'production') {
+  server.listen(PORT, HOST, () => {
+    console.log(`Server running on http://${HOST}:${PORT}`);
+  });
+}
+
+// Export for Vercel
+module.exports = server;
