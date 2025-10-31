@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
 import { refreshStats, updateStats, fetchStats, pickQuestion, updateKanji } from './ApiHandler';
+import SpeakerIcon from './components/SpeakerIcon';
 
 // Styled Components
 const Container = styled.div`
@@ -72,6 +73,10 @@ const QuestionText = styled.div`
   color: #2c3e50;
   min-height: 4.5rem;
   word-break: break-word;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
   
   @media (max-width: 600px) {
     font-size: 2.5rem;
@@ -101,6 +106,25 @@ const MetaItem = styled.span`
   display: flex;
   align-items: center;
   gap: 0.3rem;
+`;
+
+const CategoryBadge = styled.div`
+  display: inline-block;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  padding: 0.4rem 1rem;
+  border-radius: 20px;
+  font-size: 0.85rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin-bottom: 0.5rem;
+  box-shadow: 0 2px 4px rgba(102, 126, 234, 0.3);
+  
+  @media (max-width: 480px) {
+    font-size: 0.75rem;
+    padding: 0.3rem 0.8rem;
+  }
 `;
 
 const Input = styled.input`
@@ -166,11 +190,50 @@ const ResultText = styled.div`
 const CorrectText = styled(ResultText)`
   background-color: #ebfbee;
   color: #2b8a3e;
+  position: relative;
+  overflow: visible;
 `;
 
 const IncorrectText = styled(ResultText)`
   background-color: #fff5f5;
   color: #c92a2a;
+  position: relative;
+  overflow: visible;
+`;
+
+const Confetti = styled.div`
+  position: absolute;
+  width: 10px;
+  height: 10px;
+  background-color: ${props => props.color};
+  left: ${props => props.left}%;
+  animation: confetti-fall 1.5s ease-out forwards;
+  opacity: 0;
+  
+  @keyframes confetti-fall {
+    0% {
+      top: -20px;
+      opacity: 1;
+      transform: translateY(0) rotate(0deg);
+    }
+    100% {
+      top: 100px;
+      opacity: 0;
+      transform: translateY(100px) rotate(${props => props.rotation}deg);
+    }
+  }
+`;
+
+const DisappointedFace = styled.div`
+  font-size: 4rem;
+  animation: shake 0.5s ease-in-out;
+  display: inline-block;
+  
+  @keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    10%, 30%, 50%, 70%, 90% { transform: translateX(-10px); }
+    20%, 40%, 60%, 80% { transform: translateX(10px); }
+  }
 `;
 
 const LanguageSelector = styled.div`
@@ -259,6 +322,7 @@ function Answer({ question, stats, setQuestion, setStats, nextQuestion, language
     const [correctWords, setCorrectWords] = useState('');
     const [isCorrect, setIsCorrect] = useState(null);
     const [showResult, setShowResult] = useState(false);
+    const [showAnimation, setShowAnimation] = useState(false);
 
     // Reset answer state when direction or question changes
     useEffect(() => {
@@ -266,6 +330,7 @@ function Answer({ question, stats, setQuestion, setStats, nextQuestion, language
         setCorrectWords('');
         setIsCorrect(null);
         setShowResult(false);
+        setShowAnimation(false);
     }, [direction, question.id]);
 
     const checkAnswer = async () => {
@@ -333,8 +398,12 @@ function Answer({ question, stats, setQuestion, setStats, nextQuestion, language
         setIsCorrect(isAnswerCorrect);
         setCorrectWords(trueWords.join(', '));
         setShowResult(true);
+        setShowAnimation(true);
         setQuestion(currentQ);
         setStats(updatedStats);
+        
+        // Hide animation after it completes
+        setTimeout(() => setShowAnimation(false), 1500);
 
         // Update backend
         await Promise.all([
@@ -359,6 +428,7 @@ function Answer({ question, stats, setQuestion, setStats, nextQuestion, language
         setCorrectWords('');
         setIsCorrect(null);
         setShowResult(false);
+        setShowAnimation(false);
         nextQuestion();
     };
 
@@ -384,17 +454,35 @@ function Answer({ question, stats, setQuestion, setStats, nextQuestion, language
 
             <div style={{ marginTop: '1.5rem' }}>
                 {showResult && (
-                    <div style={{ marginBottom: '1.5rem' }}>
+                    <div style={{ marginBottom: '1.5rem', position: 'relative' }}>
                         {isCorrect === true ? (
-                            <CorrectText>✓ Correct! Well done!</CorrectText>
+                            <CorrectText>
+                                ✓ Correct! Well done!
+                                {showAnimation && [
+                                    ...Array(20).keys()
+                                ].map(i => (
+                                    <Confetti 
+                                        key={i}
+                                        color={['#51cf66', '#94d82d', '#ffd43b', '#74c0fc'][i % 4]}
+                                        left={5 + (i * 4.5)}
+                                        rotation={Math.random() * 360}
+                                    />
+                                ))}
+                            </CorrectText>
                         ) : isCorrect === false ? (
-                            <IncorrectText>✗ Incorrect</IncorrectText>
+                            <IncorrectText>
+                                {showAnimation && <DisappointedFace>😞</DisappointedFace>}
+                                <div>✗ Incorrect</div>
+                            </IncorrectText>
                         ) : (
                             <div style={{ color: '#6c757d', marginBottom: '1rem' }}>Answer:</div>
                         )}
                         
-                        <div style={{ margin: '1rem 0', color: '#6c757d' }}>
+                        <div style={{ margin: '1rem 0', color: '#6c757d', display: 'flex', alignItems: 'center', justifyContent: 'center', flexWrap: 'wrap' }}>
                             Correct answer: <strong>{correctWords}</strong>
+                            {language === 'dutch' && direction === 'en2dutch' && correctWords && (
+                                <SpeakerIcon text={correctWords.split(',')[0].trim()} language="nl-BE" />
+                            )}
                         </div>
                     </div>
                 )}
@@ -562,11 +650,17 @@ function Root() {
             )}
             
             <QuestionContainer>
+                {question.category && (
+                    <CategoryBadge>{question.category}</CategoryBadge>
+                )}
                 <QuestionText>
                     {language === 'dutch' 
                         ? (direction === 'dutch2en' ? question.dutch : question.en)
                         : question.kanji
                     } {question.kanji || question.dutch || question.en ? '' : '?'}
+                    {language === 'dutch' && direction === 'dutch2en' && question.dutch && (
+                        <SpeakerIcon text={question.dutch} language="nl-BE" />
+                    )}
                 </QuestionText>
                 <QuestionMetaData question={question} qMode={pickMode[questionMode]} language={language} direction={direction} />
                 

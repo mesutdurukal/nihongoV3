@@ -214,9 +214,9 @@
     "dutch": "ja",
     "en": "yes",
     "dutch2en": {
-      "correct": 0,
-      "total": 0,
-      "percentage": 0
+      "correct": 1,
+      "total": 1,
+      "percentage": 1
     },
     "en2dutch": {
       "correct": 0,
@@ -231,7 +231,7 @@
     "en": "no",
     "dutch2en": {
       "correct": 0,
-      "total": 0,
+      "total": 1,
       "percentage": 0
     },
     "en2dutch": {
@@ -438,15 +438,16 @@
     "dutch": "werk",
     "en": "work",
     "dutch2en": {
-      "correct": 0,
-      "total": 0,
-      "percentage": 0
+      "correct": 1,
+      "total": 1,
+      "percentage": 1
     },
     "en2dutch": {
       "correct": 0,
       "total": 0,
       "percentage": 0
-    }
+    },
+    "ratio": 0
   },
   "28": {
     "id": 29,
@@ -534,9 +535,9 @@
     "dutch": "thee",
     "en": "tea",
     "dutch2en": {
-      "correct": 0,
-      "total": 0,
-      "percentage": 0
+      "correct": 1,
+      "total": 1,
+      "percentage": 1
     },
     "en2dutch": {
       "correct": 0,
@@ -644,7 +645,7 @@
     "id": 41,
     "category": "verbs",
     "dutch": "zijn",
-    "en": "to be",
+    "en": "to be,be",
     "dutch2en": {
       "correct": 0,
       "total": 0,
@@ -660,7 +661,7 @@
     "id": 42,
     "category": "verbs",
     "dutch": "hebben",
-    "en": "to have",
+    "en": "to have,have",
     "dutch2en": {
       "correct": 0,
       "total": 0,
@@ -676,7 +677,7 @@
     "id": 43,
     "category": "verbs",
     "dutch": "gaan",
-    "en": "to go",
+    "en": "to go,go",
     "dutch2en": {
       "correct": 0,
       "total": 0,
@@ -692,7 +693,7 @@
     "id": 44,
     "category": "verbs",
     "dutch": "komen",
-    "en": "to come",
+    "en": "to come,come",
     "dutch2en": {
       "correct": 0,
       "total": 0,
@@ -708,23 +709,24 @@
     "id": 45,
     "category": "verbs",
     "dutch": "maken",
-    "en": "to make",
+    "en": "to make,make",
     "dutch2en": {
-      "correct": 0,
-      "total": 0,
-      "percentage": 0
+      "correct": 1,
+      "total": 1,
+      "percentage": 1
     },
     "en2dutch": {
       "correct": 0,
       "total": 0,
       "percentage": 0
-    }
+    },
+    "ratio": 0
   },
   "45": {
     "id": 46,
     "category": "verbs",
     "dutch": "doen",
-    "en": "to do",
+    "en": "to do,do",
     "dutch2en": {
       "correct": 0,
       "total": 0,
@@ -740,7 +742,7 @@
     "id": 47,
     "category": "verbs",
     "dutch": "zien",
-    "en": "to see",
+    "en": "to see,see",
     "dutch2en": {
       "correct": 0,
       "total": 0,
@@ -756,7 +758,7 @@
     "id": 48,
     "category": "verbs",
     "dutch": "horen",
-    "en": "to hear",
+    "en": "to hear,hear",
     "dutch2en": {
       "correct": 0,
       "total": 0,
@@ -772,7 +774,7 @@
     "id": 49,
     "category": "verbs",
     "dutch": "spreken",
-    "en": "to speak",
+    "en": "to speak,speak",
     "dutch2en": {
       "correct": 0,
       "total": 0,
@@ -788,7 +790,7 @@
     "id": 50,
     "category": "verbs",
     "dutch": "weten",
-    "en": "to know",
+    "en": "to know,know",
     "dutch2en": {
       "correct": 0,
       "total": 0,
@@ -886,15 +888,16 @@
     "dutch": "lelijk",
     "en": "ugly",
     "dutch2en": {
-      "correct": 0,
-      "total": 0,
-      "percentage": 0
+      "correct": 1,
+      "total": 1,
+      "percentage": 1
     },
     "en2dutch": {
       "correct": 0,
       "total": 0,
       "percentage": 0
-    }
+    },
+    "ratio": 0
   },
   "56": {
     "id": 57,
@@ -934,9 +937,9 @@
     "dutch": "warm",
     "en": "warm",
     "dutch2en": {
-      "correct": 0,
-      "total": 0,
-      "percentage": 0
+      "correct": 1,
+      "total": 1,
+      "percentage": 1
     },
     "en2dutch": {
       "correct": 0,
@@ -1030,9 +1033,9 @@
     "dutch": "waarom",
     "en": "why",
     "dutch2en": {
-      "correct": 0,
-      "total": 0,
-      "percentage": 0
+      "correct": 1,
+      "total": 1,
+      "percentage": 1
     },
     "en2dutch": {
       "correct": 0,
@@ -1111,7 +1114,7 @@
     "en": "boy",
     "dutch2en": {
       "correct": 0,
-      "total": 0,
+      "total": 1,
       "percentage": 0
     },
     "en2dutch": {
@@ -1287,7 +1290,7 @@
     "en": "country",
     "dutch2en": {
       "correct": 0,
-      "total": 0,
+      "total": 1,
       "percentage": 0
     },
     "en2dutch": {
@@ -1318,9 +1321,9 @@
     "dutch": "auto",
     "en": "car",
     "dutch2en": {
-      "correct": 0,
-      "total": 0,
-      "percentage": 0
+      "correct": 1,
+      "total": 1,
+      "percentage": 1
     },
     "en2dutch": {
       "correct": 0,
@@ -1603,14 +1606,14 @@
   "stats": {
     "size": 100,
     "global": {
-      "correct": 9,
-      "total": 11,
+      "correct": 17,
+      "total": 22,
       "record": 6
     },
     "local": {
-      "correct": 7,
-      "total": 8,
-      "record": 1
+      "correct": 15,
+      "total": 19,
+      "record": 0
     }
   }
 }
