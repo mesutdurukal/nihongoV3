@@ -145,21 +145,21 @@ server.get('/api/dutch/:id', (req, res) => {
 
 server.patch('/api/dutch/:id', (req, res) => {
   dutchData = JSON.parse(fs.readFileSync(dutchPath, 'utf-8'));
-  let dutchArray = Array.isArray(dutchData.dutch) 
-    ? dutchData.dutch 
-    : Object.values(dutchData).filter(item => item && typeof item === 'object' && item.id);
-  const index = dutchArray.findIndex(d => d.id === parseInt(req.params.id));
-  if (index !== -1) {
-    dutchArray[index] = { ...dutchArray[index], ...req.body };
-    // Reconstruct the data structure
-    if (Array.isArray(dutchData.dutch)) {
-      dutchData.dutch = dutchArray;
-    } else {
-      // Update the numbered key format
-      dutchData[index.toString()] = dutchArray[index];
+  const id = parseInt(req.params.id);
+  
+  // Find the key in the object that has this id
+  let foundKey = null;
+  for (const key in dutchData) {
+    if (dutchData[key] && dutchData[key].id === id) {
+      foundKey = key;
+      break;
     }
+  }
+  
+  if (foundKey && foundKey !== 'stats') {
+    dutchData[foundKey] = { ...dutchData[foundKey], ...req.body };
     fs.writeFileSync(dutchPath, JSON.stringify(dutchData, null, 2));
-    res.json(dutchArray[index]);
+    res.json(dutchData[foundKey]);
   } else {
     res.status(404).json({ error: 'Not found' });
   }

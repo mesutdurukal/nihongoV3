@@ -333,6 +333,28 @@ function Answer({ question, stats, setQuestion, setStats, nextQuestion, language
         setShowAnimation(false);
     }, [direction, question.id]);
 
+    const handleNext = () => {
+        setInput('');
+        setCorrectWords('');
+        setIsCorrect(null);
+        setShowResult(false);
+        setShowAnimation(false);
+        nextQuestion();
+    };
+
+    // Global keyboard listener for Space key
+    useEffect(() => {
+        const handleGlobalKeyDown = (e) => {
+            if (e.key === ' ' && showResult) {
+                e.preventDefault();
+                handleNext();
+            }
+        };
+
+        window.addEventListener('keydown', handleGlobalKeyDown);
+        return () => window.removeEventListener('keydown', handleGlobalKeyDown);
+    }, [showResult, handleNext]);
+
     const checkAnswer = async () => {
         const currentQ = { ...question };
         // Determine which field to check based on language and direction
@@ -421,15 +443,6 @@ function Answer({ question, stats, setQuestion, setStats, nextQuestion, language
                 checkAnswer();
             }
         }
-    };
-
-    const handleNext = () => {
-        setInput('');
-        setCorrectWords('');
-        setIsCorrect(null);
-        setShowResult(false);
-        setShowAnimation(false);
-        nextQuestion();
     };
 
     return (
@@ -533,7 +546,7 @@ function Root() {
     const [question, setQuestion] = useState({});
     const [questionMode, setQuestionMode] = useState(0);
     const [isLoading, setIsLoading] = useState(true);
-    const [language, setLanguage] = useState('kanji');
+    const [language, setLanguage] = useState('dutch');
     const [direction, setDirection] = useState('dutch2en'); // dutch2en or en2dutch
 
     const updateStatsCallBack = useCallback(async () => {
@@ -619,16 +632,16 @@ function Root() {
         <Container>
             <LanguageSelector>
                 <LanguageButton 
-                    active={language === 'kanji'}
-                    onClick={() => handleLanguageChange('kanji')}
-                >
-                    🇯🇵 Kanji
-                </LanguageButton>
-                <LanguageButton 
                     active={language === 'dutch'}
                     onClick={() => handleLanguageChange('dutch')}
                 >
                     🇳🇱 Dutch
+                </LanguageButton>
+                <LanguageButton 
+                    active={language === 'kanji'}
+                    onClick={() => handleLanguageChange('kanji')}
+                >
+                    🇯🇵 Kanji
                 </LanguageButton>
             </LanguageSelector>
             

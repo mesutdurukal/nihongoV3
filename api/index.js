@@ -146,11 +146,22 @@ app.get('/api/dutch/:id', (req, res) => {
 app.patch('/api/dutch/:id', (req, res) => {
   try {
     const dutchData = JSON.parse(fs.readFileSync(dutchPath, 'utf-8'));
-    if (dutchData[req.params.id]) {
-      const updatedItem = { ...dutchData[req.params.id], ...req.body };
+    const id = parseInt(req.params.id);
+    
+    // Find the key in the object that has this id
+    let foundKey = null;
+    for (const key in dutchData) {
+      if (dutchData[key] && dutchData[key].id === id) {
+        foundKey = key;
+        break;
+      }
+    }
+    
+    if (foundKey && foundKey !== 'stats') {
+      const updatedItem = { ...dutchData[foundKey], ...req.body };
       
       try {
-        dutchData[req.params.id] = updatedItem;
+        dutchData[foundKey] = updatedItem;
         fs.writeFileSync(dutchPath, JSON.stringify(dutchData, null, 2));
       } catch (writeError) {
         console.log('Cannot persist dutch update (read-only filesystem):', writeError.message);
