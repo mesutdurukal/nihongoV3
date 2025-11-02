@@ -32,8 +32,14 @@ myHeaders.append("Content-Type", "application/json");
 
 // Cache for Google Sheets data
 let sheetsDataCache = null;
-let lastSheetsFetch = 0;
-const CACHE_DURATION = 5000; // 5 seconds
+// No CACHE_DURATION needed - cache is always fresh because we update it on every word change
+// Only refetch when cache is empty (initial load, page refresh, or language change)
+
+// Sorted indices for efficient picking (no need to refetch!)
+let sortedByLeastAnswered = null;
+let sortedByLeastCorrect = null;
+let currentLanguage = null;
+let currentStatsKey = null;
 
 async function refreshStats(language = 'kanji') {
     try {
@@ -86,6 +92,37 @@ async function updateStats(input, language = 'kanji') {
     }
 }
 
+// Helper function to reindex sorted arrays in background
+function reindexInBackground(language) {
+    const statsKey = language === 'dutch' ? 'dutch2en' : 'kanji2en';
+    
+    if (!sheetsDataCache) return;
+    
+    // Use setTimeout to make it async and non-blocking
+    setTimeout(() => {
+        console.log('🔄 Reindexing in background while user thinks...');
+        const questions = Object.values(sheetsDataCache).filter(item => item && item.id);
+        
+        // Sort by least answered
+        sortedByLeastAnswered = [...questions].sort((a, b) => 
+            (a[statsKey]?.total || 0) - (b[statsKey]?.total || 0)
+        );
+        
+        // Sort by least correct
+        sortedByLeastCorrect = [...questions].map(q => {
+            const stats = q[statsKey] || { correct: 0, total: 0 };
+            return {
+                ...q,
+                _ratio: stats.total > 0 ? (stats.correct / stats.total) : 0
+            };
+        }).sort((a, b) => a._ratio - b._ratio);
+        
+        currentLanguage = language;
+        currentStatsKey = statsKey;
+        console.log('✅ Background reindexing complete - next question ready!');
+    }, 0);
+}
+
 async function updateWord(input, language = 'kanji') {
     try {
         // Try to update Google Sheets first if configured
@@ -93,8 +130,18 @@ async function updateWord(input, language = 'kanji') {
             const result = await updateWordInSheets(input, language);
             if (result && result.success) {
                 console.log('✅ Updated word in Google Sheets');
-                // Update cache timestamp to prevent immediate re-fetch
-                lastSheetsFetch = Date.now();
+                
+                // Update the cached word data to prevent stale stats
+                if (sheetsDataCache) {
+                    const key = (input.id - 1).toString();
+                    if (sheetsDataCache[key]) {
+                        sheetsDataCache[key] = input;
+                        
+                        // Reindex in background while user thinks about next question
+                        reindexInBackground(language);
+                    }
+                }
+                
                 return input;
             }
             console.warn('Failed to update Sheets, falling back to backend');
@@ -146,19 +193,20 @@ async function pickQuestion(mode, language = 'kanji') {
         let questions;
         
         // Try Google Sheets first if configured
-        const now = Date.now();
         if (isSheetsConfigured()) {
-            if (now - lastSheetsFetch > CACHE_DURATION) {
+            // Only fetch if cache is empty or language changed
+            if (!sheetsDataCache || currentLanguage !== language) {
                 const sheetsData = await readFromSheets(language);
                 if (sheetsData) {
                     sheetsDataCache = sheetsData;
-                    lastSheetsFetch = now;
                     console.log('📦 Loaded data from Google Sheets');
                     questions = Object.values(sheetsData).filter(item => item && item.id);
+                    // Reindex immediately after fresh fetch
+                    reindexInBackground(language);
                 }
-            } else if (sheetsDataCache) {
+            } else {
                 questions = Object.values(sheetsDataCache).filter(item => item && item.id);
-                console.log('📦 Using cached Google Sheets data');
+                console.log('📦 Using cached Google Sheets data (always fresh!)');
             }
         }
         
@@ -168,9 +216,10 @@ async function pickQuestion(mode, language = 'kanji') {
             const response = await fetch(hostIp + 'api/' + endpoint);
             questions = await response.json();
             console.log('🔄 Loaded data from backend');
+            reindexInBackground(language);
         }
         
-        console.log(`Picking question in mode: ${mode} for language: ${language}`); // Debug log
+        console.log(`Picking question in mode: ${mode} for language: ${language}`);
         
         // Determine the stats key based on language
         const statsKey = language === 'dutch' ? 'dutch2en' : 'kanji2en';
@@ -178,54 +227,62 @@ async function pickQuestion(mode, language = 'kanji') {
         if (mode === 'random') {
             // For random mode, just pick a random question directly
             const randomIndex = Math.floor(Math.random() * questions.length);
-            // Return a deep copy to ensure fresh stats
             return JSON.parse(JSON.stringify(questions[randomIndex]));
         }
         
-        // For other modes, create a filtered copy of questions
+        // Check if sorted arrays are ready (should be from background reindex)
+        if (mode === 'leastAnswered' && sortedByLeastAnswered && currentLanguage === language) {
+            // Use pre-sorted array - instant! ⚡
+            console.log('⚡ Using pre-sorted array (instant pick!)');
+            const minTotal = sortedByLeastAnswered[0]?.[statsKey]?.total || 0;
+            const leastAnswered = sortedByLeastAnswered.filter(q => 
+                (q[statsKey]?.total || 0) === minTotal
+            );
+            return JSON.parse(JSON.stringify(leastAnswered[Math.floor(Math.random() * leastAnswered.length)]));
+            
+        } else if (mode === 'leastCorrect' && sortedByLeastCorrect && currentLanguage === language) {
+            // Use pre-sorted array - instant! ⚡
+            console.log('⚡ Using pre-sorted array (instant pick!)');
+            const minRatio = sortedByLeastCorrect[0]?._ratio || 0;
+            const leastCorrect = sortedByLeastCorrect.filter(q => q._ratio === minRatio);
+            
+            // Pick and remove temporary ratio field
+            const selected = leastCorrect[Math.floor(Math.random() * leastCorrect.length)];
+            const { _ratio, ...questionWithoutRatio } = selected;
+            return JSON.parse(JSON.stringify(questionWithoutRatio));
+        }
+        
+        // Fallback: sort on-demand if arrays not ready yet (first question only)
+        console.log('⏳ Sorting on-demand (first question)...');
         let filteredQuestions = [...questions];
         
         if (mode === 'leastAnswered') {
-            // Sort by total attempts (ascending)
             filteredQuestions.sort((a, b) => 
                 (a[statsKey]?.total || 0) - (b[statsKey]?.total || 0)
             );
-            
-            // Get all questions with the minimum number of attempts
             const minTotal = filteredQuestions[0]?.[statsKey]?.total || 0;
             const leastAnswered = filteredQuestions.filter(q => 
                 (q[statsKey]?.total || 0) === minTotal
             );
-            
-            // Return a random question from the least answered ones (deep copy for fresh stats)
             return JSON.parse(JSON.stringify(leastAnswered[Math.floor(Math.random() * leastAnswered.length)]));
             
         } else if (mode === 'leastCorrect') {
-            // Calculate correct ratio for each question
             const questionsWithRatio = filteredQuestions.map(q => {
                 const stats = q[statsKey] || { correct: 0, total: 0 };
                 return {
                     ...q,
-                    ratio: stats.total > 0 ? (stats.correct / stats.total) : 0
+                    _ratio: stats.total > 0 ? (stats.correct / stats.total) : 0
                 };
-            });
+            }).sort((a, b) => a._ratio - b._ratio);
             
-            // Sort by ratio (ascending)
-            questionsWithRatio.sort((a, b) => a.ratio - b.ratio);
-            
-            // Get all questions with the lowest ratio
-            const minRatio = questionsWithRatio[0]?.ratio || 0;
-            const leastCorrect = questionsWithRatio.filter(q => q.ratio === minRatio);
-            
-            // Pick a random question and remove the temporary ratio field
+            const minRatio = questionsWithRatio[0]?._ratio || 0;
+            const leastCorrect = questionsWithRatio.filter(q => q._ratio === minRatio);
             const selected = leastCorrect[Math.floor(Math.random() * leastCorrect.length)];
-            const { ratio, ...questionWithoutRatio } = selected;
-            
-            // Return a deep copy for fresh stats
+            const { _ratio, ...questionWithoutRatio } = selected;
             return JSON.parse(JSON.stringify(questionWithoutRatio));
         }
         
-        // Fallback: return a random question if mode is not recognized (deep copy for fresh stats)
+        // Fallback: random
         return JSON.parse(JSON.stringify(questions[Math.floor(Math.random() * questions.length)]));
     } catch (error) {
         console.error('Error picking question:', error);
