@@ -1,4 +1,4 @@
-import { readFromDrive, writeToDrive, getSavedAccessToken } from './GoogleDriveAPI';
+import { readFromSheets, updateWordInSheets, updateStatsInSheets, readStatsFromSheets, isSheetsConfigured } from './SheetsAPI';
 
 // Get API base URL
 const getApiBaseUrl = () => {
@@ -30,9 +30,9 @@ console.log('REACT_APP_API_BASE_URL:', process.env.REACT_APP_API_BASE_URL);
 const myHeaders = new Headers();
 myHeaders.append("Content-Type", "application/json");
 
-// Cache for Google Drive data
-let driveDataCache = null;
-let lastDriveFetch = 0;
+// Cache for Google Sheets data
+let sheetsDataCache = null;
+let lastSheetsFetch = 0;
 const CACHE_DURATION = 5000; // 5 seconds
 
 async function refreshStats(language = 'kanji') {
@@ -59,36 +59,17 @@ async function refreshStats(language = 'kanji') {
 
 async function updateStats(input, language = 'kanji') {
     try {
-        // Try to update Google Drive first if authenticated
-        const accessToken = getSavedAccessToken();
-        if (accessToken) {
-            // If no cache, load from backend first
-            if (!driveDataCache) {
-                const endpoint = language === 'dutch' ? 'dutch' : 'kanji';
-                const response = await fetch(hostIp + 'api/' + endpoint);
-                const questions = await response.json();
-                
-                // Convert array to object format for Drive
-                driveDataCache = {};
-                questions.forEach(q => {
-                    const key = (q.id - 1).toString();
-                    driveDataCache[key] = q;
-                });
-                console.log('📦 Loaded data from backend for Drive sync (stats)');
+        // Try to update Google Sheets first if configured
+        if (isSheetsConfigured()) {
+            const result = await updateStatsInSheets(input, language);
+            if (result && result.success) {
+                console.log('✅ Updated stats in Google Sheets');
+                return input;
             }
-            
-            // Update stats in the cache
-            driveDataCache.stats = input;
-            
-            // Write back to Drive (async, don't wait)
-            writeToDrive(driveDataCache, accessToken, null, language).catch(err => {
-                console.warn('Failed to write stats to Drive, will try backend:', err);
-            });
-            
-            console.log('✅ Updated stats in Google Drive cache');
+            console.warn('Failed to update Sheets, falling back to backend');
         }
         
-        // Also update backend as fallback
+        // Fallback to backend
         const endpoint = language === 'dutch' ? 'dutch' : 'kanji';
         const raw = JSON.stringify(input);
         const requestOptions = {
@@ -107,36 +88,19 @@ async function updateStats(input, language = 'kanji') {
 
 async function updateWord(input, language = 'kanji') {
     try {
-        // Try to update Google Drive first if authenticated
-        const accessToken = getSavedAccessToken();
-        if (accessToken) {
-            // If no cache, load from backend first
-            if (!driveDataCache) {
-                const endpoint = language === 'dutch' ? 'dutch' : 'kanji';
-                const response = await fetch(hostIp + 'api/' + endpoint);
-                const questions = await response.json();
-                
-                // Convert array to object format for Drive
-                driveDataCache = {};
-                questions.forEach(q => {
-                    const key = (q.id - 1).toString();
-                    driveDataCache[key] = q;
-                });
-                console.log('📦 Loaded data from backend for Drive sync');
+        // Try to update Google Sheets first if configured
+        if (isSheetsConfigured()) {
+            const result = await updateWordInSheets(input, language);
+            if (result && result.success) {
+                console.log('✅ Updated word in Google Sheets');
+                // Update cache timestamp to prevent immediate re-fetch
+                lastSheetsFetch = Date.now();
+                return input;
             }
-            
-            const key = (input.id - 1).toString();
-            driveDataCache[key] = input;
-            
-            // Write back to Drive (async, don't wait)
-            writeToDrive(driveDataCache, accessToken, null, language).catch(err => {
-                console.warn('Failed to write to Drive, will try backend:', err);
-            });
-            
-            console.log('✅ Updated word in Google Drive cache');
+            console.warn('Failed to update Sheets, falling back to backend');
         }
         
-        // Also update backend as fallback
+        // Fallback to backend
         const raw = JSON.stringify(input);
         const { id, ...rest } = input;
         const requestOptions = {
@@ -158,10 +122,13 @@ async function updateWord(input, language = 'kanji') {
 
 async function fetchStats(language = 'kanji') {
     try {
-        // Try to get stats from Drive cache first
-        if (driveDataCache && driveDataCache.stats) {
-            console.log('📊 Using cached stats from Google Drive');
-            return driveDataCache.stats;
+        // Try to get stats from Sheets first if configured
+        if (isSheetsConfigured()) {
+            const stats = await readStatsFromSheets(language);
+            if (stats) {
+                return stats;
+            }
+            console.warn('Failed to fetch from Sheets, falling back to backend');
         }
         
         // Fallback to backend
@@ -178,22 +145,24 @@ async function pickQuestion(mode, language = 'kanji') {
     try {
         let questions;
         
-        // Try Google Drive first if configured
+        // Try Google Sheets first if configured
         const now = Date.now();
-        if (now - lastDriveFetch > CACHE_DURATION) {
-            const driveData = await readFromDrive(null, language);
-            if (driveData) {
-                driveDataCache = driveData;
-                lastDriveFetch = now;
-                console.log('📦 Loaded data from Google Drive');
-                questions = Object.values(driveData).filter(item => item && item.id);
+        if (isSheetsConfigured()) {
+            if (now - lastSheetsFetch > CACHE_DURATION) {
+                const sheetsData = await readFromSheets(language);
+                if (sheetsData) {
+                    sheetsDataCache = sheetsData;
+                    lastSheetsFetch = now;
+                    console.log('📦 Loaded data from Google Sheets');
+                    questions = Object.values(sheetsData).filter(item => item && item.id);
+                }
+            } else if (sheetsDataCache) {
+                questions = Object.values(sheetsDataCache).filter(item => item && item.id);
+                console.log('📦 Using cached Google Sheets data');
             }
-        } else if (driveDataCache) {
-            questions = Object.values(driveDataCache).filter(item => item && item.id);
-            console.log('📦 Using cached Google Drive data');
         }
         
-        // Fallback to backend if Drive not available
+        // Fallback to backend if Sheets not available
         if (!questions) {
             const endpoint = language === 'dutch' ? 'dutch' : 'kanji';
             const response = await fetch(hostIp + 'api/' + endpoint);
@@ -248,8 +217,12 @@ async function pickQuestion(mode, language = 'kanji') {
             const minRatio = questionsWithRatio[0]?.ratio || 0;
             const leastCorrect = questionsWithRatio.filter(q => q.ratio === minRatio);
             
-            // Return a random question from the least correct ones (deep copy for fresh stats)
-            return JSON.parse(JSON.stringify(leastCorrect[Math.floor(Math.random() * leastCorrect.length)]));
+            // Pick a random question and remove the temporary ratio field
+            const selected = leastCorrect[Math.floor(Math.random() * leastCorrect.length)];
+            const { ratio, ...questionWithoutRatio } = selected;
+            
+            // Return a deep copy for fresh stats
+            return JSON.parse(JSON.stringify(questionWithoutRatio));
         }
         
         // Fallback: return a random question if mode is not recognized (deep copy for fresh stats)

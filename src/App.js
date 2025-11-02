@@ -552,6 +552,7 @@ function Root() {
     const [isLoading, setIsLoading] = useState(true);
     const [language, setLanguage] = useState('dutch');
     const [direction, setDirection] = useState('dutch2en'); // dutch2en or en2dutch
+    const [prefetchedQuestion, setPrefetchedQuestion] = useState(null);
 
     const updateStatsCallBack = useCallback(async () => {
         try {
@@ -576,8 +577,17 @@ function Root() {
         }
     }, [updateStatsCallBack, language]);
     
-    const getNextQuestion = useCallback(async (modeIndex = questionMode) => {
+    const getNextQuestion = useCallback(async (modeIndex = questionMode, usePrefetched = true) => {
         try {
+            // Check if we have a prefetched question
+            if (usePrefetched && prefetchedQuestion) {
+                console.log('⚡ Using prefetched question');
+                setQuestion(prefetchedQuestion);
+                setPrefetchedQuestion(null);
+                setIsLoading(false);
+                return;
+            }
+            
             const currentMode = pickMode[modeIndex];
             console.log('🎯 Getting question with mode:', currentMode, '(index:', modeIndex, ')');
             const nextQ = await pickQuestion(currentMode, language);
@@ -589,7 +599,7 @@ function Root() {
         } finally {
             setIsLoading(false);
         }
-    }, [questionMode, language]);
+    }, [questionMode, language, prefetchedQuestion]);
 
     const handleNextQuestion = async () => {
         setIsLoading(true);
@@ -599,6 +609,29 @@ function Root() {
         setQuestionMode(nextMode);
         await getNextQuestion(nextMode);
     };
+    
+    // Prefetch the next question in the background
+    useEffect(() => {
+        if (question && question.id && !prefetchedQuestion) {
+            const prefetchNext = async () => {
+                try {
+                    const nextMode = (questionMode + 1) % pickMode.length;
+                    console.log('🔮 Prefetching next question in background...');
+                    const nextQ = await pickQuestion(pickMode[nextMode], language);
+                    if (nextQ) {
+                        setPrefetchedQuestion(nextQ);
+                        console.log('✅ Next question prefetched and ready');
+                    }
+                } catch (error) {
+                    console.error('Error prefetching question:', error);
+                }
+            };
+            
+            // Prefetch after a short delay to not interfere with current question rendering
+            const timer = setTimeout(prefetchNext, 500);
+            return () => clearTimeout(timer);
+        }
+    }, [question, questionMode, language, prefetchedQuestion]);
 
     useEffect(() => {
         const initialize = async () => {

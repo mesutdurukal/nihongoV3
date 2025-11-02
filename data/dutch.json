@@ -29,8 +29,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "2": {
     "id": 3,
@@ -78,8 +77,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "5": {
     "id": 6,
@@ -239,8 +237,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "15": {
     "id": 16,
@@ -272,8 +269,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "17": {
     "id": 18,
@@ -305,8 +301,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "19": {
     "id": 20,
@@ -322,8 +317,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "20": {
     "id": 21,
@@ -451,8 +445,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "28": {
     "id": 29,
@@ -500,8 +493,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "31": {
     "id": 32,
@@ -517,8 +509,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "32": {
     "id": 33,
@@ -566,8 +557,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "35": {
     "id": 36,
@@ -583,8 +573,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "36": {
     "id": 37,
@@ -632,8 +621,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "39": {
     "id": 40,
@@ -649,8 +637,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "40": {
     "id": 41,
@@ -666,8 +653,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "41": {
     "id": 42,
@@ -699,8 +685,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "43": {
     "id": 44,
@@ -732,8 +717,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "45": {
     "id": 46,
@@ -741,8 +725,8 @@
     "dutch": "doen",
     "en": "to do,do",
     "dutch2en": {
-      "correct": 1,
-      "total": 1,
+      "correct": 2,
+      "total": 2,
       "percentage": 1
     },
     "en2dutch": {
@@ -797,8 +781,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "49": {
     "id": 50,
@@ -814,8 +797,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "50": {
     "id": 51,
@@ -847,8 +829,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "52": {
     "id": 53,
@@ -880,8 +861,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "54": {
     "id": 55,
@@ -890,8 +870,8 @@
     "en": "beautiful",
     "dutch2en": {
       "correct": 1,
-      "total": 1,
-      "percentage": 1
+      "total": 2,
+      "percentage": 0.5
     },
     "en2dutch": {
       "correct": 0,
@@ -913,8 +893,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "56": {
     "id": 57,
@@ -994,8 +973,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "61": {
     "id": 62,
@@ -1011,8 +989,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "62": {
     "id": 63,
@@ -1036,9 +1013,9 @@
     "dutch": "wanneer",
     "en": "when",
     "dutch2en": {
-      "correct": 0,
-      "total": 2,
-      "percentage": 0
+      "correct": 1,
+      "total": 3,
+      "percentage": 0.3333333333333333
     },
     "en2dutch": {
       "correct": 0,
@@ -1076,8 +1053,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "66": {
     "id": 67,
@@ -1141,8 +1117,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "70": {
     "id": 71,
@@ -1174,8 +1149,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "72": {
     "id": 73,
@@ -1191,8 +1165,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "73": {
     "id": 74,
@@ -1256,8 +1229,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "77": {
     "id": 78,
@@ -1289,8 +1261,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "79": {
     "id": 80,
@@ -1322,8 +1293,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "81": {
     "id": 82,
@@ -1339,8 +1309,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "82": {
     "id": 83,
@@ -1372,8 +1341,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "84": {
     "id": 85,
@@ -1405,8 +1373,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "86": {
     "id": 87,
@@ -1422,8 +1389,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "87": {
     "id": 88,
@@ -1471,8 +1437,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "90": {
     "id": 91,
@@ -1488,8 +1453,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "91": {
     "id": 92,
@@ -1497,8 +1461,8 @@
     "dutch": "bed",
     "en": "bed",
     "dutch2en": {
-      "correct": 1,
-      "total": 1,
+      "correct": 2,
+      "total": 2,
       "percentage": 1
     },
     "en2dutch": {
@@ -1553,8 +1517,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "95": {
     "id": 96,
@@ -1570,8 +1533,7 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "96": {
     "id": 97,
@@ -1635,20 +1597,19 @@
       "correct": 0,
       "total": 0,
       "percentage": 0
-    },
-    "ratio": 0
+    }
   },
   "stats": {
-    "size": 100,
+    "size": "Value",
     "global": {
-      "correct": 132,
-      "total": 156,
-      "record": 18
+      "correct": 101,
+      "total": 1,
+      "record": 19
     },
     "local": {
-      "correct": 130,
-      "total": 153,
-      "record": 4
+      "correct": 133,
+      "total": 157,
+      "record": 19
     }
   }
 }

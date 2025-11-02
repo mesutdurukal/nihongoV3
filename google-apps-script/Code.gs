@@ -1,21 +1,38 @@
 // Google Apps Script to act as a simple API for your vocabulary app
 // Deploy this as a web app to get a URL you can call from your React app
 
-// Your sheet name
+// Your sheet names
 const DUTCH_SHEET = 'Dutch';
-const STATS_SHEET = 'Stats';
+const KANJI_SHEET = 'Kanji';
+const DUTCH_STATS_SHEET = 'DutchStats';
+const KANJI_STATS_SHEET = 'KanjiStats';
+
+// Handle OPTIONS requests for CORS preflight
+function doOptions(e) {
+  return ContentService.createTextOutput('')
+    .setMimeType(ContentService.MimeType.JSON);
+}
 
 function doGet(e) {
   const action = e.parameter.action;
+  const language = e.parameter.language || 'dutch';
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   
-  if (action === 'getDutch') {
-    return getDutchData(ss);
+  if (action === 'getData') {
+    return getData(ss, language);
   } else if (action === 'getStats') {
-    return getStats(ss);
+    return getStats(ss, language);
   } else if (action === 'getWord') {
     const id = parseInt(e.parameter.id);
-    return getWord(ss, id);
+    return getWord(ss, id, language);
+  } else if (action === 'updateWord') {
+    // Handle update via GET with data parameter
+    const data = JSON.parse(e.parameter.data || '{}');
+    return updateWord(ss, data, language);
+  } else if (action === 'updateStats') {
+    // Handle update via GET with data parameter
+    const data = JSON.parse(e.parameter.data || '{}');
+    return updateStats(ss, data, language);
   }
   
   return ContentService.createTextOutput(JSON.stringify({
@@ -25,15 +42,16 @@ function doGet(e) {
 
 function doPost(e) {
   const action = e.parameter.action;
+  const language = e.parameter.language || 'dutch';
   const ss = SpreadsheetApp.getActiveSpreadsheet();
   
   try {
     const data = JSON.parse(e.postData.contents);
     
     if (action === 'updateWord') {
-      return updateWord(ss, data);
+      return updateWord(ss, data, language);
     } else if (action === 'updateStats') {
-      return updateStats(ss, data);
+      return updateStats(ss, data, language);
     }
     
     return ContentService.createTextOutput(JSON.stringify({
@@ -47,10 +65,10 @@ function doPost(e) {
   }
 }
 
-function getDutchData(ss) {
-  const sheet = ss.getSheetByName(DUTCH_SHEET);
+function getData(ss, language) {
+  const sheetName = language === 'kanji' ? KANJI_SHEET : DUTCH_SHEET;
+  const sheet = ss.getSheetByName(sheetName);
   const data = sheet.getDataRange().getValues();
-  const headers = data[0];
   
   const result = {};
   
@@ -59,58 +77,20 @@ function getDutchData(ss) {
     const id = row[0];
     const key = (id - 1).toString();
     
-    result[key] = {
-      id: id,
-      dutch: row[1],
-      en: row[2],
-      category: row[3] || undefined,
-      dutch2en: {
-        correct: row[4] || 0,
-        total: row[5] || 0,
-        percentage: row[6] || 0
-      },
-      en2dutch: {
-        correct: row[7] || 0,
-        total: row[8] || 0,
-        percentage: row[9] || 0
-      }
-    };
-  }
-  
-  return ContentService.createTextOutput(JSON.stringify(result))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function getStats(ss) {
-  const sheet = ss.getSheetByName(STATS_SHEET);
-  const data = sheet.getDataRange().getValues();
-  
-  const result = {
-    size: 100,
-    global: {
-      correct: data[1][1],
-      total: data[1][2],
-      record: data[1][3]
-    },
-    local: {
-      correct: data[2][1],
-      total: data[2][2],
-      record: data[2][3]
-    }
-  };
-  
-  return ContentService.createTextOutput(JSON.stringify(result))
-    .setMimeType(ContentService.MimeType.JSON);
-}
-
-function getWord(ss, id) {
-  const sheet = ss.getSheetByName(DUTCH_SHEET);
-  const data = sheet.getDataRange().getValues();
-  
-  for (let i = 1; i < data.length; i++) {
-    const row = data[i];
-    if (row[0] === id) {
-      const result = {
+    if (language === 'kanji') {
+      result[key] = {
+        id: id,
+        kanji: row[1],
+        en: row[2],
+        category: row[3] || undefined,
+        kanji2en: {
+          correct: row[4] || 0,
+          total: row[5] || 0,
+          percentage: row[6] || 0
+        }
+      };
+    } else {
+      result[key] = {
         id: id,
         dutch: row[1],
         en: row[2],
@@ -126,6 +106,76 @@ function getWord(ss, id) {
           percentage: row[9] || 0
         }
       };
+    }
+  }
+  
+  return ContentService.createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function getStats(ss, language) {
+  const sheetName = language === 'kanji' ? KANJI_STATS_SHEET : DUTCH_STATS_SHEET;
+  const sheet = ss.getSheetByName(sheetName);
+  const data = sheet.getDataRange().getValues();
+  
+  const result = {
+    size: data[0][1] || 100,
+    global: {
+      correct: data[1][1] || 0,
+      total: data[1][2] || 0,
+      record: data[1][3] || 0
+    },
+    local: {
+      correct: data[2][1] || 0,
+      total: data[2][2] || 0,
+      record: data[2][3] || 0
+    }
+  };
+  
+  return ContentService.createTextOutput(JSON.stringify(result))
+    .setMimeType(ContentService.MimeType.JSON);
+}
+
+function getWord(ss, id, language) {
+  const sheetName = language === 'kanji' ? KANJI_SHEET : DUTCH_SHEET;
+  const sheet = ss.getSheetByName(sheetName);
+  const data = sheet.getDataRange().getValues();
+  
+  for (let i = 1; i < data.length; i++) {
+    const row = data[i];
+    if (row[0] === id) {
+      let result;
+      
+      if (language === 'kanji') {
+        result = {
+          id: id,
+          kanji: row[1],
+          en: row[2],
+          category: row[3] || undefined,
+          kanji2en: {
+            correct: row[4] || 0,
+            total: row[5] || 0,
+            percentage: row[6] || 0
+          }
+        };
+      } else {
+        result = {
+          id: id,
+          dutch: row[1],
+          en: row[2],
+          category: row[3] || undefined,
+          dutch2en: {
+            correct: row[4] || 0,
+            total: row[5] || 0,
+            percentage: row[6] || 0
+          },
+          en2dutch: {
+            correct: row[7] || 0,
+            total: row[8] || 0,
+            percentage: row[9] || 0
+          }
+        };
+      }
       
       return ContentService.createTextOutput(JSON.stringify(result))
         .setMimeType(ContentService.MimeType.JSON);
@@ -137,19 +187,27 @@ function getWord(ss, id) {
   })).setMimeType(ContentService.MimeType.JSON);
 }
 
-function updateWord(ss, wordData) {
-  const sheet = ss.getSheetByName(DUTCH_SHEET);
+function updateWord(ss, wordData, language) {
+  const sheetName = language === 'kanji' ? KANJI_SHEET : DUTCH_SHEET;
+  const sheet = ss.getSheetByName(sheetName);
   const data = sheet.getDataRange().getValues();
   
   for (let i = 1; i < data.length; i++) {
     if (data[i][0] === wordData.id) {
-      // Update the row
-      sheet.getRange(i + 1, 5).setValue(wordData.dutch2en.correct);
-      sheet.getRange(i + 1, 6).setValue(wordData.dutch2en.total);
-      sheet.getRange(i + 1, 7).setValue(wordData.dutch2en.percentage);
-      sheet.getRange(i + 1, 8).setValue(wordData.en2dutch.correct);
-      sheet.getRange(i + 1, 9).setValue(wordData.en2dutch.total);
-      sheet.getRange(i + 1, 10).setValue(wordData.en2dutch.percentage);
+      if (language === 'kanji') {
+        // Update kanji stats
+        sheet.getRange(i + 1, 5).setValue(wordData.kanji2en.correct);
+        sheet.getRange(i + 1, 6).setValue(wordData.kanji2en.total);
+        sheet.getRange(i + 1, 7).setValue(wordData.kanji2en.percentage);
+      } else {
+        // Update dutch stats
+        sheet.getRange(i + 1, 5).setValue(wordData.dutch2en.correct);
+        sheet.getRange(i + 1, 6).setValue(wordData.dutch2en.total);
+        sheet.getRange(i + 1, 7).setValue(wordData.dutch2en.percentage);
+        sheet.getRange(i + 1, 8).setValue(wordData.en2dutch.correct);
+        sheet.getRange(i + 1, 9).setValue(wordData.en2dutch.total);
+        sheet.getRange(i + 1, 10).setValue(wordData.en2dutch.percentage);
+      }
       
       return ContentService.createTextOutput(JSON.stringify({
         success: true,
@@ -163,8 +221,14 @@ function updateWord(ss, wordData) {
   })).setMimeType(ContentService.MimeType.JSON);
 }
 
-function updateStats(ss, statsData) {
-  const sheet = ss.getSheetByName(STATS_SHEET);
+function updateStats(ss, statsData, language) {
+  const sheetName = language === 'kanji' ? KANJI_STATS_SHEET : DUTCH_STATS_SHEET;
+  const sheet = ss.getSheetByName(sheetName);
+  
+  // Update size (row 1)
+  if (statsData.size) {
+    sheet.getRange(1, 2).setValue(statsData.size);
+  }
   
   // Update global stats (row 2)
   sheet.getRange(2, 2).setValue(statsData.global.correct);
