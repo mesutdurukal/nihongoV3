@@ -416,6 +416,8 @@ function Answer({ question, stats, setQuestion, setStats, nextQuestion, language
         wordStats.percentage = wordStats.correct / wordStats.total;
         currentQ[statsKey] = wordStats;
         
+        console.log('💾 Updating stats for question', currentQ.id, ':', wordStats);
+        
         // Update state
         setIsCorrect(isAnswerCorrect);
         setCorrectWords(trueWords.join(', '));
@@ -428,10 +430,11 @@ function Answer({ question, stats, setQuestion, setStats, nextQuestion, language
         setTimeout(() => setShowAnimation(false), 1500);
 
         // Update backend
-        await Promise.all([
+        const [statsResult, kanjiResult] = await Promise.all([
             updateStats(updatedStats, language),
             updateKanji(currentQ, language)
         ]);
+        console.log('✅ Backend update complete - Stats:', statsResult ? '✓' : '✗', '| Word:', kanjiResult ? '✓' : '✗');
     };
 
     const handleKeyDown = (e) => {
@@ -572,9 +575,10 @@ function Root() {
         }
     }, [updateStatsCallBack, language]);
     
-    const getNextQuestion = useCallback(async () => {
+    const getNextQuestion = useCallback(async (modeIndex = questionMode) => {
         try {
-            const currentMode = pickMode[questionMode];
+            const currentMode = pickMode[modeIndex];
+            console.log('🎯 Getting question with mode:', currentMode, '(index:', modeIndex, ')');
             const nextQ = await pickQuestion(currentMode, language);
             if (nextQ) {
                 setQuestion(nextQ);
@@ -589,8 +593,10 @@ function Root() {
     const handleNextQuestion = async () => {
         setIsLoading(true);
         // Move to next mode
-        setQuestionMode(prevMode => (prevMode + 1) % pickMode.length);
-        await getNextQuestion();
+        const nextMode = (questionMode + 1) % pickMode.length;
+        console.log('📊 Mode change:', pickMode[questionMode], '→', pickMode[nextMode]);
+        setQuestionMode(nextMode);
+        await getNextQuestion(nextMode);
     };
 
     useEffect(() => {

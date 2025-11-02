@@ -199,9 +199,9 @@
     "dutch": "vijf",
     "en": "five",
     "dutch2en": {
-      "correct": 0,
-      "total": 0,
-      "percentage": 0
+      "correct": 1,
+      "total": 1,
+      "percentage": 1
     },
     "en2dutch": {
       "correct": 0,
@@ -231,15 +231,16 @@
     "dutch": "nee",
     "en": "no",
     "dutch2en": {
-      "correct": 0,
-      "total": 1,
-      "percentage": 0
+      "correct": 1,
+      "total": 3,
+      "percentage": 0.3333333333333333
     },
     "en2dutch": {
       "correct": 0,
       "total": 0,
       "percentage": 0
-    }
+    },
+    "ratio": 0
   },
   "15": {
     "id": 16,
@@ -280,9 +281,9 @@
     "dutch": "morgen",
     "en": "tomorrow",
     "dutch2en": {
-      "correct": 0,
-      "total": 1,
-      "percentage": 0
+      "correct": 1,
+      "total": 2,
+      "percentage": 0.5
     },
     "en2dutch": {
       "correct": 0,
@@ -312,9 +313,9 @@
     "dutch": "nu",
     "en": "now",
     "dutch2en": {
-      "correct": 0,
-      "total": 3,
-      "percentage": 0
+      "correct": 1,
+      "total": 4,
+      "percentage": 0.25
     },
     "en2dutch": {
       "correct": 0,
@@ -377,8 +378,8 @@
     "dutch": "kind",
     "en": "child",
     "dutch2en": {
-      "correct": 1,
-      "total": 1,
+      "correct": 2,
+      "total": 2,
       "percentage": 1
     },
     "en2dutch": {
@@ -409,9 +410,9 @@
     "dutch": "huis",
     "en": "house",
     "dutch2en": {
-      "correct": 0,
-      "total": 0,
-      "percentage": 0
+      "correct": 1,
+      "total": 1,
+      "percentage": 1
     },
     "en2dutch": {
       "correct": 0,
@@ -490,8 +491,8 @@
     "dutch": "eten",
     "en": "food, to eat",
     "dutch2en": {
-      "correct": 1,
-      "total": 1,
+      "correct": 2,
+      "total": 2,
       "percentage": 1
     },
     "en2dutch": {
@@ -556,15 +557,16 @@
     "dutch": "melk",
     "en": "milk",
     "dutch2en": {
-      "correct": 0,
-      "total": 0,
-      "percentage": 0
+      "correct": 1,
+      "total": 1,
+      "percentage": 1
     },
     "en2dutch": {
       "correct": 0,
       "total": 0,
       "percentage": 0
-    }
+    },
+    "ratio": 0
   },
   "35": {
     "id": 36,
@@ -589,9 +591,9 @@
     "dutch": "vlees",
     "en": "meat",
     "dutch2en": {
-      "correct": 0,
-      "total": 0,
-      "percentage": 0
+      "correct": 1,
+      "total": 1,
+      "percentage": 1
     },
     "en2dutch": {
       "correct": 0,
@@ -605,9 +607,9 @@
     "dutch": "vis",
     "en": "fish",
     "dutch2en": {
-      "correct": 0,
-      "total": 0,
-      "percentage": 0
+      "correct": 1,
+      "total": 1,
+      "percentage": 1
     },
     "en2dutch": {
       "correct": 0,
@@ -671,8 +673,8 @@
     "dutch": "hebben",
     "en": "to have,have",
     "dutch2en": {
-      "correct": 1,
-      "total": 1,
+      "correct": 2,
+      "total": 2,
       "percentage": 1
     },
     "en2dutch": {
@@ -687,15 +689,16 @@
     "dutch": "gaan",
     "en": "to go,go",
     "dutch2en": {
-      "correct": 0,
-      "total": 0,
-      "percentage": 0
+      "correct": 1,
+      "total": 1,
+      "percentage": 1
     },
     "en2dutch": {
       "correct": 0,
       "total": 0,
       "percentage": 0
-    }
+    },
+    "ratio": 0
   },
   "43": {
     "id": 44,
@@ -736,9 +739,9 @@
     "dutch": "doen",
     "en": "to do,do",
     "dutch2en": {
-      "correct": 0,
-      "total": 0,
-      "percentage": 0
+      "correct": 1,
+      "total": 1,
+      "percentage": 1
     },
     "en2dutch": {
       "correct": 0,
@@ -784,8 +787,8 @@
     "dutch": "spreken",
     "en": "to speak,speak",
     "dutch2en": {
-      "correct": 1,
-      "total": 1,
+      "correct": 2,
+      "total": 2,
       "percentage": 1
     },
     "en2dutch": {
@@ -834,15 +837,16 @@
     "dutch": "klein",
     "en": "small",
     "dutch2en": {
-      "correct": 0,
-      "total": 0,
-      "percentage": 0
+      "correct": 1,
+      "total": 1,
+      "percentage": 1
     },
     "en2dutch": {
       "correct": 0,
       "total": 0,
       "percentage": 0
-    }
+    },
+    "ratio": 0
   },
   "52": {
     "id": 53,
@@ -883,9 +887,9 @@
     "dutch": "mooi",
     "en": "beautiful",
     "dutch2en": {
-      "correct": 0,
-      "total": 0,
-      "percentage": 0
+      "correct": 1,
+      "total": 1,
+      "percentage": 1
     },
     "en2dutch": {
       "correct": 0,
@@ -916,9 +920,9 @@
     "dutch": "nieuw",
     "en": "new",
     "dutch2en": {
-      "correct": 0,
-      "total": 0,
-      "percentage": 0
+      "correct": 1,
+      "total": 1,
+      "percentage": 1
     },
     "en2dutch": {
       "correct": 0,
@@ -948,8 +952,8 @@
     "dutch": "warm",
     "en": "warm",
     "dutch2en": {
-      "correct": 1,
-      "total": 1,
+      "correct": 2,
+      "total": 2,
       "percentage": 1
     },
     "en2dutch": {
@@ -996,9 +1000,9 @@
     "dutch": "wie",
     "en": "who",
     "dutch2en": {
-      "correct": 0,
-      "total": 1,
-      "percentage": 0
+      "correct": 1,
+      "total": 4,
+      "percentage": 0.25
     },
     "en2dutch": {
       "correct": 0,
@@ -1078,9 +1082,9 @@
     "dutch": "hoeveel",
     "en": "how much, how many",
     "dutch2en": {
-      "correct": 0,
-      "total": 0,
-      "percentage": 0
+      "correct": 1,
+      "total": 1,
+      "percentage": 1
     },
     "en2dutch": {
       "correct": 0,
@@ -1159,15 +1163,16 @@
     "dutch": "dag",
     "en": "day",
     "dutch2en": {
-      "correct": 0,
-      "total": 0,
-      "percentage": 0
+      "correct": 1,
+      "total": 1,
+      "percentage": 1
     },
     "en2dutch": {
       "correct": 0,
       "total": 0,
       "percentage": 0
-    }
+    },
+    "ratio": 0
   },
   "72": {
     "id": 73,
@@ -1192,8 +1197,8 @@
     "dutch": "week",
     "en": "week",
     "dutch2en": {
-      "correct": 2,
-      "total": 2,
+      "correct": 3,
+      "total": 3,
       "percentage": 1
     },
     "en2dutch": {
@@ -1208,9 +1213,9 @@
     "dutch": "maand",
     "en": "month",
     "dutch2en": {
-      "correct": 0,
-      "total": 0,
-      "percentage": 0
+      "correct": 1,
+      "total": 1,
+      "percentage": 1
     },
     "en2dutch": {
       "correct": 0,
@@ -1224,8 +1229,8 @@
     "dutch": "jaar",
     "en": "year",
     "dutch2en": {
-      "correct": 1,
-      "total": 1,
+      "correct": 2,
+      "total": 2,
       "percentage": 1
     },
     "en2dutch": {
@@ -1240,15 +1245,16 @@
     "dutch": "tijd",
     "en": "time",
     "dutch2en": {
-      "correct": 0,
-      "total": 0,
-      "percentage": 0
+      "correct": 1,
+      "total": 1,
+      "percentage": 1
     },
     "en2dutch": {
       "correct": 0,
       "total": 0,
       "percentage": 0
-    }
+    },
+    "ratio": 0
   },
   "77": {
     "id": 78,
@@ -1272,15 +1278,16 @@
     "dutch": "naam",
     "en": "name",
     "dutch2en": {
-      "correct": 0,
-      "total": 0,
-      "percentage": 0
+      "correct": 2,
+      "total": 2,
+      "percentage": 1
     },
     "en2dutch": {
       "correct": 0,
       "total": 0,
       "percentage": 0
-    }
+    },
+    "ratio": 0
   },
   "79": {
     "id": 80,
@@ -1288,8 +1295,8 @@
     "dutch": "stad",
     "en": "city",
     "dutch2en": {
-      "correct": 2,
-      "total": 2,
+      "correct": 3,
+      "total": 3,
       "percentage": 1
     },
     "en2dutch": {
@@ -1321,15 +1328,16 @@
     "dutch": "straat",
     "en": "street",
     "dutch2en": {
-      "correct": 0,
-      "total": 0,
-      "percentage": 0
+      "correct": 1,
+      "total": 1,
+      "percentage": 1
     },
     "en2dutch": {
       "correct": 0,
       "total": 0,
       "percentage": 0
-    }
+    },
+    "ratio": 0
   },
   "82": {
     "id": 83,
@@ -1354,14 +1362,15 @@
     "en": "bicycle",
     "dutch2en": {
       "correct": 0,
-      "total": 0,
+      "total": 1,
       "percentage": 0
     },
     "en2dutch": {
       "correct": 0,
       "total": 0,
       "percentage": 0
-    }
+    },
+    "ratio": 0
   },
   "84": {
     "id": 85,
@@ -1369,8 +1378,8 @@
     "dutch": "trein",
     "en": "train",
     "dutch2en": {
-      "correct": 1,
-      "total": 1,
+      "correct": 2,
+      "total": 2,
       "percentage": 1
     },
     "en2dutch": {
@@ -1402,15 +1411,16 @@
     "dutch": "boek",
     "en": "book",
     "dutch2en": {
-      "correct": 0,
-      "total": 0,
-      "percentage": 0
+      "correct": 1,
+      "total": 1,
+      "percentage": 1
     },
     "en2dutch": {
       "correct": 0,
       "total": 0,
       "percentage": 0
-    }
+    },
+    "ratio": 0
   },
   "87": {
     "id": 88,
@@ -1450,15 +1460,16 @@
     "dutch": "deur",
     "en": "door",
     "dutch2en": {
-      "correct": 0,
-      "total": 0,
-      "percentage": 0
+      "correct": 1,
+      "total": 1,
+      "percentage": 1
     },
     "en2dutch": {
       "correct": 0,
       "total": 0,
       "percentage": 0
-    }
+    },
+    "ratio": 0
   },
   "90": {
     "id": 91,
@@ -1627,14 +1638,14 @@
   "stats": {
     "size": 100,
     "global": {
-      "correct": 89,
-      "total": 104,
-      "record": 16
+      "correct": 121,
+      "total": 140,
+      "record": 18
     },
     "local": {
-      "correct": 87,
-      "total": 101,
-      "record": 1
+      "correct": 119,
+      "total": 137,
+      "record": 4
     }
   }
 }
