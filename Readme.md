@@ -133,7 +133,7 @@ To add a new language:
 
 ### Deploy Your Own Instance
 
-See [DEPLOY_STEPS.md](DEPLOY_STEPS.md) for quick deployment instructions or [DEPLOYMENT.md](DEPLOYMENT.md) for detailed guide.
+See [DEPLOY_STEPS.md](guides/DEPLOY_STEPS.md) for quick deployment instructions or [DEPLOYMENT.md](guides/DEPLOYMENT.md) for detailed guide.
 
 **Quick Steps:**
 1. Deploy backend: `vercel --prod`

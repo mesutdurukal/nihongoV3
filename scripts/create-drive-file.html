@@ -1,0 +1,122 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Create Google Drive File</title>
+</head>
+<body>
+    <h1>Create dutch.json on Google Drive</h1>
+    <p>This will create a new file on your Drive that the app can access.</p>
+    
+    <button onclick="handleSignIn()">1. Sign in with Google</button>
+    <br><br>
+    <button onclick="createFile()" id="createBtn" disabled>2. Create File on Drive</button>
+    <br><br>
+    <div id="status"></div>
+    <div id="fileId" style="background: #f0f0f0; padding: 10px; margin-top: 10px; display: none;">
+        <strong>File ID:</strong> <span id="fileIdValue"></span>
+        <br><br>
+        <strong>Update your .env file with:</strong>
+        <pre>REACT_APP_GOOGLE_DRIVE_FILE_ID=<span id="fileIdCopy"></span></pre>
+    </div>
+
+    <script>
+        const CLIENT_ID = '483528819483-unf4gnjjqm6kjl9e6vak8vrfcoibn59j.apps.googleusercontent.com';
+        const SCOPES = 'https://www.googleapis.com/auth/drive.file';
+        const REDIRECT_URI = 'http://localhost:8080';
+        let accessToken = null;
+
+        function handleSignIn() {
+            // Use OAuth 2.0 redirect flow instead
+            const authUrl = `https://accounts.google.com/o/oauth2/v2/auth?` +
+                `client_id=${CLIENT_ID}&` +
+                `redirect_uri=${encodeURIComponent(REDIRECT_URI)}&` +
+                `response_type=token&` +
+                `scope=${encodeURIComponent(SCOPES)}`;
+            
+            window.location.href = authUrl;
+        }
+        
+        // Check if we're coming back from OAuth
+        window.onload = function() {
+            const hash = window.location.hash.substring(1);
+            const params = new URLSearchParams(hash);
+            const token = params.get('access_token');
+            
+            if (token) {
+                accessToken = token;
+                document.getElementById('status').innerHTML = '✅ Signed in! Now click "Create File"';
+                document.getElementById('createBtn').disabled = false;
+            }
+        };
+
+        async function createFile() {
+            if (!accessToken) {
+                alert('Please sign in first');
+                return;
+            }
+
+            document.getElementById('status').innerHTML = '⏳ Creating file...';
+
+            try {
+                // Read the local dutch.json content
+                const dutchData = await fetch('../data/dutch.json').then(r => r.json());
+
+                // Create file metadata
+                const metadata = {
+                    name: 'dutch.json',
+                    mimeType: 'application/json'
+                };
+
+                // Create the file
+                const form = new FormData();
+                form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+                form.append('file', new Blob([JSON.stringify(dutchData, null, 2)], { type: 'application/json' }));
+
+                const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`
+                    },
+                    body: form
+                });
+
+                const result = await response.json();
+
+                if (result.id) {
+                    document.getElementById('status').innerHTML = '✅ File created successfully!';
+                    document.getElementById('fileId').style.display = 'block';
+                    document.getElementById('fileIdValue').textContent = result.id;
+                    document.getElementById('fileIdCopy').textContent = result.id;
+                    
+                    // Make it shareable
+                    await makeFilePublic(result.id);
+                } else {
+                    document.getElementById('status').innerHTML = '❌ Error: ' + JSON.stringify(result);
+                }
+            } catch (error) {
+                document.getElementById('status').innerHTML = '❌ Error: ' + error.message;
+            }
+        }
+
+        async function makeFilePublic(fileId) {
+            try {
+                await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}/permissions`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${accessToken}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({
+                        role: 'reader',
+                        type: 'anyone'
+                    })
+                });
+                document.getElementById('status').innerHTML += '<br>✅ File is now publicly readable';
+            } catch (error) {
+                console.error('Error making file public:', error);
+            }
+        }
+    </script>
+    <script src="https://accounts.google.com/gsi/client" async defer></script>
+</body>
+</html>

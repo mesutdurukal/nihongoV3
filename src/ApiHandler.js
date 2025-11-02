@@ -1,3 +1,5 @@
+import { readFromDrive, writeToDrive, getSavedAccessToken } from './GoogleDriveAPI';
+
 // Get API base URL
 const getApiBaseUrl = () => {
   // Use REACT_APP_API_BASE_URL if defined in .env file
@@ -28,6 +30,11 @@ console.log('REACT_APP_API_BASE_URL:', process.env.REACT_APP_API_BASE_URL);
 const myHeaders = new Headers();
 myHeaders.append("Content-Type", "application/json");
 
+// Cache for Google Drive data
+let driveDataCache = null;
+let lastDriveFetch = 0;
+const CACHE_DURATION = 5000; // 5 seconds
+
 async function refreshStats(language = 'kanji') {
     try {
         // First fetch current stats to preserve global stats
@@ -52,6 +59,36 @@ async function refreshStats(language = 'kanji') {
 
 async function updateStats(input, language = 'kanji') {
     try {
+        // Try to update Google Drive first if authenticated
+        const accessToken = getSavedAccessToken();
+        if (accessToken) {
+            // If no cache, load from backend first
+            if (!driveDataCache) {
+                const endpoint = language === 'dutch' ? 'dutch' : 'kanji';
+                const response = await fetch(hostIp + 'api/' + endpoint);
+                const questions = await response.json();
+                
+                // Convert array to object format for Drive
+                driveDataCache = {};
+                questions.forEach(q => {
+                    const key = (q.id - 1).toString();
+                    driveDataCache[key] = q;
+                });
+                console.log('📦 Loaded data from backend for Drive sync (stats)');
+            }
+            
+            // Update stats in the cache
+            driveDataCache.stats = input;
+            
+            // Write back to Drive (async, don't wait)
+            writeToDrive(driveDataCache, accessToken, null, language).catch(err => {
+                console.warn('Failed to write stats to Drive, will try backend:', err);
+            });
+            
+            console.log('✅ Updated stats in Google Drive cache');
+        }
+        
+        // Also update backend as fallback
         const endpoint = language === 'dutch' ? 'dutch' : 'kanji';
         const raw = JSON.stringify(input);
         const requestOptions = {
@@ -68,8 +105,38 @@ async function updateStats(input, language = 'kanji') {
     }
 }
 
-async function updateKanji(input, language = 'kanji') {
+async function updateWord(input, language = 'kanji') {
     try {
+        // Try to update Google Drive first if authenticated
+        const accessToken = getSavedAccessToken();
+        if (accessToken) {
+            // If no cache, load from backend first
+            if (!driveDataCache) {
+                const endpoint = language === 'dutch' ? 'dutch' : 'kanji';
+                const response = await fetch(hostIp + 'api/' + endpoint);
+                const questions = await response.json();
+                
+                // Convert array to object format for Drive
+                driveDataCache = {};
+                questions.forEach(q => {
+                    const key = (q.id - 1).toString();
+                    driveDataCache[key] = q;
+                });
+                console.log('📦 Loaded data from backend for Drive sync');
+            }
+            
+            const key = (input.id - 1).toString();
+            driveDataCache[key] = input;
+            
+            // Write back to Drive (async, don't wait)
+            writeToDrive(driveDataCache, accessToken, null, language).catch(err => {
+                console.warn('Failed to write to Drive, will try backend:', err);
+            });
+            
+            console.log('✅ Updated word in Google Drive cache');
+        }
+        
+        // Also update backend as fallback
         const raw = JSON.stringify(input);
         const { id, ...rest } = input;
         const requestOptions = {
@@ -91,6 +158,13 @@ async function updateKanji(input, language = 'kanji') {
 
 async function fetchStats(language = 'kanji') {
     try {
+        // Try to get stats from Drive cache first
+        if (driveDataCache && driveDataCache.stats) {
+            console.log('📊 Using cached stats from Google Drive');
+            return driveDataCache.stats;
+        }
+        
+        // Fallback to backend
         const endpoint = language === 'dutch' ? 'dutch' : 'kanji';
         const response = await fetch(hostIp + 'api/' + endpoint + '/stats');
         return await response.json();
@@ -102,9 +176,30 @@ async function fetchStats(language = 'kanji') {
 
 async function pickQuestion(mode, language = 'kanji') {
     try {
-        const endpoint = language === 'dutch' ? 'dutch' : 'kanji';
-        const response = await fetch(hostIp + 'api/' + endpoint);
-        const questions = await response.json();
+        let questions;
+        
+        // Try Google Drive first if configured
+        const now = Date.now();
+        if (now - lastDriveFetch > CACHE_DURATION) {
+            const driveData = await readFromDrive(null, language);
+            if (driveData) {
+                driveDataCache = driveData;
+                lastDriveFetch = now;
+                console.log('📦 Loaded data from Google Drive');
+                questions = Object.values(driveData).filter(item => item && item.id);
+            }
+        } else if (driveDataCache) {
+            questions = Object.values(driveDataCache).filter(item => item && item.id);
+            console.log('📦 Using cached Google Drive data');
+        }
+        
+        // Fallback to backend if Drive not available
+        if (!questions) {
+            const endpoint = language === 'dutch' ? 'dutch' : 'kanji';
+            const response = await fetch(hostIp + 'api/' + endpoint);
+            questions = await response.json();
+            console.log('🔄 Loaded data from backend');
+        }
         
         console.log(`Picking question in mode: ${mode} for language: ${language}`); // Debug log
         
@@ -114,7 +209,8 @@ async function pickQuestion(mode, language = 'kanji') {
         if (mode === 'random') {
             // For random mode, just pick a random question directly
             const randomIndex = Math.floor(Math.random() * questions.length);
-            return questions[randomIndex];
+            // Return a deep copy to ensure fresh stats
+            return JSON.parse(JSON.stringify(questions[randomIndex]));
         }
         
         // For other modes, create a filtered copy of questions
@@ -132,8 +228,8 @@ async function pickQuestion(mode, language = 'kanji') {
                 (q[statsKey]?.total || 0) === minTotal
             );
             
-            // Return a random question from the least answered ones
-            return leastAnswered[Math.floor(Math.random() * leastAnswered.length)];
+            // Return a random question from the least answered ones (deep copy for fresh stats)
+            return JSON.parse(JSON.stringify(leastAnswered[Math.floor(Math.random() * leastAnswered.length)]));
             
         } else if (mode === 'leastCorrect') {
             // Calculate correct ratio for each question
@@ -152,12 +248,12 @@ async function pickQuestion(mode, language = 'kanji') {
             const minRatio = questionsWithRatio[0]?.ratio || 0;
             const leastCorrect = questionsWithRatio.filter(q => q.ratio === minRatio);
             
-            // Return a random question from the least correct ones
-            return leastCorrect[Math.floor(Math.random() * leastCorrect.length)];
+            // Return a random question from the least correct ones (deep copy for fresh stats)
+            return JSON.parse(JSON.stringify(leastCorrect[Math.floor(Math.random() * leastCorrect.length)]));
         }
         
-        // Fallback: return a random question if mode is not recognized
-        return questions[Math.floor(Math.random() * questions.length)];
+        // Fallback: return a random question if mode is not recognized (deep copy for fresh stats)
+        return JSON.parse(JSON.stringify(questions[Math.floor(Math.random() * questions.length)]));
     } catch (error) {
         console.error('Error picking question:', error);
         return null;
@@ -176,4 +272,4 @@ async function IP() {
     }
 }
 
-export { refreshStats, updateStats, fetchStats, updateKanji, pickQuestion, IP };
+export { refreshStats, updateStats, fetchStats, updateWord, pickQuestion, IP };

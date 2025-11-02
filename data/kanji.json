@@ -10634,9 +10634,10 @@
       "meaning": "seido,system",
       "kanji2en": {
         "correct": 0,
-        "total": 6,
+        "total": 7,
         "percentage": 0
-      }
+      },
+      "ratio": 0
     },
     {
       "id": 968,
@@ -10775,13 +10776,13 @@
     "size": 979,
     "global": {
       "correct": 10215,
-      "total": 23785,
+      "total": 23786,
       "record": 57
     },
     "local": {
       "correct": 2,
-      "total": 6,
-      "record": 1
+      "total": 7,
+      "record": 0
     }
   }
 }

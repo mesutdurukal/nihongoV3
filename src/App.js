@@ -1,7 +1,8 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import styled from 'styled-components';
-import { refreshStats, updateStats, fetchStats, pickQuestion, updateKanji } from './ApiHandler';
+import { refreshStats, updateStats, fetchStats, pickQuestion, updateWord } from './ApiHandler';
 import SpeakerIcon from './components/SpeakerIcon';
+import GoogleSignIn from './GoogleSignIn';
 
 // Styled Components
 const Container = styled.div`
@@ -430,11 +431,11 @@ function Answer({ question, stats, setQuestion, setStats, nextQuestion, language
         setTimeout(() => setShowAnimation(false), 1500);
 
         // Update backend
-        const [statsResult, kanjiResult] = await Promise.all([
+        const [statsResult, wordResult] = await Promise.all([
             updateStats(updatedStats, language),
-            updateKanji(currentQ, language)
+            updateWord(currentQ, language)
         ]);
-        console.log('✅ Backend update complete - Stats:', statsResult ? '✓' : '✗', '| Word:', kanjiResult ? '✓' : '✗');
+        console.log('✅ Backend update complete - Stats:', statsResult ? '✓' : '✗', '| Word:', wordResult ? '✓' : '✗');
     };
 
     const handleKeyDown = (e) => {
@@ -636,6 +637,7 @@ function Root() {
 
     return (
         <Container>
+            <GoogleSignIn />
             <LanguageSelector>
                 <LanguageButton 
                     active={language === 'dutch'}
