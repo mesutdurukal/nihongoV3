@@ -41,6 +41,78 @@ let sortedByLeastCorrect = null;
 let currentLanguage = null;
 let currentStatsKey = null;
 
+// Flag to track if Sheets are being loaded in background
+let sheetsLoadingInProgress = false;
+
+// LocalStorage cache keys
+const CACHE_KEY_PREFIX = 'nihongo_sheets_cache_';
+const CACHE_TIMESTAMP_PREFIX = 'nihongo_sheets_timestamp_';
+const CACHE_MAX_AGE = 24 * 60 * 60 * 1000; // 24 hours
+
+// Load cache from localStorage
+function loadCacheFromStorage(language) {
+    try {
+        const cacheKey = CACHE_KEY_PREFIX + language;
+        const timestampKey = CACHE_TIMESTAMP_PREFIX + language;
+        
+        const cached = localStorage.getItem(cacheKey);
+        const timestamp = localStorage.getItem(timestampKey);
+        
+        if (cached && timestamp) {
+            const age = Date.now() - parseInt(timestamp);
+            if (age < CACHE_MAX_AGE) {
+                console.log('💾 Loaded cache from localStorage (age:', Math.round(age / 1000 / 60), 'minutes)');
+                return JSON.parse(cached);
+            } else {
+                console.log('🗑️ Cache expired, will fetch fresh data');
+            }
+        }
+    } catch (error) {
+        console.error('Error loading cache from storage:', error);
+    }
+    return null;
+}
+
+// Save cache to localStorage
+function saveCacheToStorage(language, data) {
+    try {
+        const cacheKey = CACHE_KEY_PREFIX + language;
+        const timestampKey = CACHE_TIMESTAMP_PREFIX + language;
+        
+        localStorage.setItem(cacheKey, JSON.stringify(data));
+        localStorage.setItem(timestampKey, Date.now().toString());
+        console.log('💾 Saved cache to localStorage');
+    } catch (error) {
+        console.error('Error saving cache to storage:', error);
+    }
+}
+
+// Load Sheets data in background (non-blocking)
+function loadSheetsInBackground(language) {
+    if (sheetsLoadingInProgress || !isSheetsConfigured()) {
+        return;
+    }
+    
+    sheetsLoadingInProgress = true;
+    console.log('🔄 Loading Google Sheets in background...');
+    
+    readFromSheets(language)
+        .then(sheetsData => {
+            if (sheetsData) {
+                sheetsDataCache = sheetsData;
+                saveCacheToStorage(language, sheetsData);
+                console.log('✅ Background Sheets load complete');
+                reindexInBackground(language);
+            }
+        })
+        .catch(error => {
+            console.error('Error loading Sheets in background:', error);
+        })
+        .finally(() => {
+            sheetsLoadingInProgress = false;
+        });
+}
+
 async function refreshStats(language = 'kanji') {
     try {
         // First fetch current stats to preserve global stats
@@ -137,6 +209,9 @@ async function updateWord(input, language = 'kanji') {
                     if (sheetsDataCache[key]) {
                         sheetsDataCache[key] = input;
                         
+                        // Also update localStorage cache
+                        saveCacheToStorage(language, sheetsDataCache);
+                        
                         // Reindex in background while user thinks about next question
                         reindexInBackground(language);
                     }
@@ -192,31 +267,39 @@ async function pickQuestion(mode, language = 'kanji') {
     try {
         let questions;
         
-        // Try Google Sheets first if configured
-        if (isSheetsConfigured()) {
-            // Only fetch if cache is empty or language changed
-            if (!sheetsDataCache || currentLanguage !== language) {
-                const sheetsData = await readFromSheets(language);
-                if (sheetsData) {
-                    sheetsDataCache = sheetsData;
-                    console.log('📦 Loaded data from Google Sheets');
-                    questions = Object.values(sheetsData).filter(item => item && item.id);
-                    // Reindex immediately after fresh fetch
-                    reindexInBackground(language);
-                }
-            } else {
-                questions = Object.values(sheetsDataCache).filter(item => item && item.id);
-                console.log('📦 Using cached Google Sheets data (always fresh!)');
-            }
+        // Strategy 1: Check memory cache first (instant)
+        if (sheetsDataCache && currentLanguage === language) {
+            questions = Object.values(sheetsDataCache).filter(item => item && item.id);
+            console.log('⚡ Using memory cache (instant!)');
         }
         
-        // Fallback to backend if Sheets not available
+        // Strategy 2: Check localStorage cache (very fast, ~10ms)
+        // Use cache for instant display, but always refresh in background
+        if (!questions && isSheetsConfigured()) {
+            const cachedData = loadCacheFromStorage(language);
+            if (cachedData) {
+                sheetsDataCache = cachedData;
+                questions = Object.values(cachedData).filter(item => item && item.id);
+                currentLanguage = language;
+                reindexInBackground(language);
+            }
+            
+            // Always refresh Sheets in background to get latest data
+            loadSheetsInBackground(language);
+        }
+        
+        // Strategy 3: Use backend API (fast, ~100-200ms)
         if (!questions) {
             const endpoint = language === 'dutch' ? 'dutch' : 'kanji';
+            console.log('🚀 Using backend API (fast path)');
             const response = await fetch(hostIp + 'api/' + endpoint);
             questions = await response.json();
-            console.log('🔄 Loaded data from backend');
             reindexInBackground(language);
+            
+            // Load Sheets in background for future requests
+            if (isSheetsConfigured()) {
+                loadSheetsInBackground(language);
+            }
         }
         
         console.log(`Picking question in mode: ${mode} for language: ${language}`);

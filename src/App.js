@@ -375,8 +375,18 @@ function Answer({ question, stats, setQuestion, setStats, nextQuestion, language
             return;
         }
         
-        const userAnswer = userInput.trim().toLowerCase();
-        const isAnswerCorrect = trueWords.some(word => word.toLowerCase() === userAnswer);
+        // Helper function to remove punctuation and normalize text
+        const normalizeText = (text) => {
+            return text.toLowerCase()
+                .replace(/[.,!?;:'"\-\(\)\[\]]/g, '') // Remove punctuation
+                .replace(/\s+/g, ' ')                  // Normalize multiple spaces to single space
+                .trim();
+        };
+        
+        const userAnswer = normalizeText(userInput);
+        console.log('🔍 User answer (normalized):', JSON.stringify(userAnswer));
+        console.log('🔍 Correct answers (normalized):', trueWords.map(w => JSON.stringify(normalizeText(w))));
+        const isAnswerCorrect = trueWords.some(word => normalizeText(word) === userAnswer);
         
         // Update stats with safe defaults
         const updatedStats = {
@@ -637,17 +647,35 @@ function Root() {
         const initialize = async () => {
             try {
                 setIsLoading(true);
-                // Only reset stats if they don't exist
-                const currentStats = await fetchStats(language);
-                if (!currentStats || !currentStats.global) {
-                    await resetStats();
-                } else {
-                    // Keep the current stats
-                    setStats(currentStats);
+                
+                // Fetch first question using 'random' mode (fastest - no sorting)
+                // This gets the UI ready ASAP
+                const firstQuestionPromise = pickQuestion('random', language);
+                
+                // Fetch stats in parallel
+                const statsPromise = fetchStats(language);
+                
+                // Wait for first question to show UI immediately
+                const firstQuestion = await firstQuestionPromise;
+                if (firstQuestion) {
+                    setQuestion(firstQuestion);
+                    setIsLoading(false); // Show UI immediately!
                 }
-                await getNextQuestion();
+                
+                // Handle stats in background (non-blocking)
+                statsPromise.then(currentStats => {
+                    if (!currentStats || !currentStats.global) {
+                        resetStats();
+                    } else {
+                        setStats(currentStats);
+                    }
+                }).catch(error => {
+                    console.error('Error loading stats:', error);
+                });
+                
             } catch (error) {
                 console.error('Initialization error:', error);
+                setIsLoading(false);
             }
         };
         initialize();
@@ -657,7 +685,30 @@ function Root() {
     if (isLoading) {
         return (
             <Container>
-                <div style={{ textAlign: 'center', padding: '2rem' }}>Loading...</div>
+                <div style={{ 
+                    textAlign: 'center', 
+                    padding: '4rem 2rem',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: '1rem'
+                }}>
+                    <div style={{
+                        width: '50px',
+                        height: '50px',
+                        border: '4px solid #f3f3f3',
+                        borderTop: '4px solid #4dabf7',
+                        borderRadius: '50%',
+                        animation: 'spin 1s linear infinite'
+                    }} />
+                    <div style={{ color: '#6c757d', fontSize: '1.1rem' }}>Loading your first question...</div>
+                    <style>{`
+                        @keyframes spin {
+                            0% { transform: rotate(0deg); }
+                            100% { transform: rotate(360deg); }
+                        }
+                    `}</style>
+                </div>
             </Container>
         );
     }
