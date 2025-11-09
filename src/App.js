@@ -378,8 +378,9 @@ function Answer({ question, stats, setQuestion, setStats, nextQuestion, language
         // Helper function to remove punctuation and normalize text
         const normalizeText = (text) => {
             return text.toLowerCase()
-                .replace(/[.,!?;:'"\-\(\)\[\]]/g, '') // Remove punctuation
-                .replace(/\s+/g, ' ')                  // Normalize multiple spaces to single space
+                .replace(/[''`]/g, '')                     // Remove all apostrophes/backticks first
+                .replace(/[.,!?;:'""\-\(\)\[\]]/g, '')     // Remove other punctuation
+                .replace(/\s+/g, ' ')                      // Normalize multiple spaces to single space
                 .trim();
         };
         
@@ -759,12 +760,24 @@ function Root() {
                     <CategoryBadge>{question.category}</CategoryBadge>
                 )}
                 <QuestionText>
-                    {language === 'dutch' 
-                        ? (direction === 'dutch2en' ? question.dutch : question.en)
-                        : question.kanji
-                    } {question.kanji || question.dutch || question.en ? '' : '?'}
+                    {(() => {
+                        let displayText;
+                        if (language === 'dutch') {
+                            displayText = direction === 'dutch2en' ? question.dutch : question.en;
+                        } else {
+                            displayText = question.kanji;
+                        }
+                        
+                        // If there are multiple meanings separated by comma, pick one randomly
+                        if (displayText && displayText.includes(',')) {
+                            const options = displayText.split(',').map(opt => opt.trim());
+                            displayText = options[Math.floor(Math.random() * options.length)];
+                        }
+                        
+                        return displayText;
+                    })()} {question.kanji || question.dutch || question.en ? '' : '?'}
                     {language === 'dutch' && direction === 'dutch2en' && question.dutch && (
-                        <SpeakerIcon text={question.dutch} language="nl-BE" />
+                        <SpeakerIcon text={question.dutch.split(',')[0].trim()} language="nl-BE" />
                     )}
                 </QuestionText>
                 <QuestionMetaData question={question} qMode={pickMode[questionMode]} language={language} direction={direction} />

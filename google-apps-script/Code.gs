@@ -74,36 +74,37 @@ function getData(ss, language) {
   
   for (let i = 1; i < data.length; i++) {
     const row = data[i];
-    const id = row[0];
+    // Use row number as ID (i starts at 1 for first data row after header)
+    const id = i;
     const key = (id - 1).toString();
     
     if (language === 'kanji') {
       result[key] = {
         id: id,
-        kanji: row[1],
-        en: row[2],
-        category: row[3] || undefined,
+        kanji: row[0],
+        en: row[1],
+        category: row[2] || undefined,
         kanji2en: {
-          correct: row[4] || 0,
-          total: row[5] || 0,
-          percentage: row[6] || 0
+          correct: row[3] || 0,
+          total: row[4] || 0,
+          percentage: row[5] || 0
         }
       };
     } else {
       result[key] = {
         id: id,
-        dutch: row[1],
-        en: row[2],
-        category: row[3] || undefined,
+        dutch: row[0],
+        en: row[1],
+        category: row[2] || undefined,
         dutch2en: {
-          correct: row[4] || 0,
-          total: row[5] || 0,
-          percentage: row[6] || 0
+          correct: row[3] || 0,
+          total: row[4] || 0,
+          percentage: row[5] || 0
         },
         en2dutch: {
-          correct: row[7] || 0,
-          total: row[8] || 0,
-          percentage: row[9] || 0
+          correct: row[6] || 0,
+          total: row[7] || 0,
+          percentage: row[8] || 0
         }
       };
     }
@@ -141,45 +142,46 @@ function getWord(ss, id, language) {
   const sheet = ss.getSheetByName(sheetName);
   const data = sheet.getDataRange().getValues();
   
-  for (let i = 1; i < data.length; i++) {
-    const row = data[i];
-    if (row[0] === id) {
-      let result;
-      
-      if (language === 'kanji') {
-        result = {
-          id: id,
-          kanji: row[1],
-          en: row[2],
-          category: row[3] || undefined,
-          kanji2en: {
-            correct: row[4] || 0,
-            total: row[5] || 0,
-            percentage: row[6] || 0
-          }
-        };
-      } else {
-        result = {
-          id: id,
-          dutch: row[1],
-          en: row[2],
-          category: row[3] || undefined,
-          dutch2en: {
-            correct: row[4] || 0,
-            total: row[5] || 0,
-            percentage: row[6] || 0
-          },
-          en2dutch: {
-            correct: row[7] || 0,
-            total: row[8] || 0,
-            percentage: row[9] || 0
-          }
-        };
-      }
-      
-      return ContentService.createTextOutput(JSON.stringify(result))
-        .setMimeType(ContentService.MimeType.JSON);
+  // ID is the row number (1-based for first data row)
+  const rowIndex = id;
+  
+  if (rowIndex >= 1 && rowIndex < data.length) {
+    const row = data[rowIndex];
+    let result;
+    
+    if (language === 'kanji') {
+      result = {
+        id: id,
+        kanji: row[0],
+        en: row[1],
+        category: row[2] || undefined,
+        kanji2en: {
+          correct: row[3] || 0,
+          total: row[4] || 0,
+          percentage: row[5] || 0
+        }
+      };
+    } else {
+      result = {
+        id: id,
+        dutch: row[0],
+        en: row[1],
+        category: row[2] || undefined,
+        dutch2en: {
+          correct: row[3] || 0,
+          total: row[4] || 0,
+          percentage: row[5] || 0
+        },
+        en2dutch: {
+          correct: row[6] || 0,
+          total: row[7] || 0,
+          percentage: row[8] || 0
+        }
+      };
     }
+    
+    return ContentService.createTextOutput(JSON.stringify(result))
+      .setMimeType(ContentService.MimeType.JSON);
   }
   
   return ContentService.createTextOutput(JSON.stringify({
@@ -190,34 +192,29 @@ function getWord(ss, id, language) {
 function updateWord(ss, wordData, language) {
   const sheetName = language === 'kanji' ? KANJI_SHEET : DUTCH_SHEET;
   const sheet = ss.getSheetByName(sheetName);
-  const data = sheet.getDataRange().getValues();
   
-  for (let i = 1; i < data.length; i++) {
-    if (data[i][0] === wordData.id) {
-      if (language === 'kanji') {
-        // Update kanji stats
-        sheet.getRange(i + 1, 5).setValue(wordData.kanji2en.correct);
-        sheet.getRange(i + 1, 6).setValue(wordData.kanji2en.total);
-        sheet.getRange(i + 1, 7).setValue(wordData.kanji2en.percentage);
-      } else {
-        // Update dutch stats
-        sheet.getRange(i + 1, 5).setValue(wordData.dutch2en.correct);
-        sheet.getRange(i + 1, 6).setValue(wordData.dutch2en.total);
-        sheet.getRange(i + 1, 7).setValue(wordData.dutch2en.percentage);
-        sheet.getRange(i + 1, 8).setValue(wordData.en2dutch.correct);
-        sheet.getRange(i + 1, 9).setValue(wordData.en2dutch.total);
-        sheet.getRange(i + 1, 10).setValue(wordData.en2dutch.percentage);
-      }
-      
-      return ContentService.createTextOutput(JSON.stringify({
-        success: true,
-        data: wordData
-      })).setMimeType(ContentService.MimeType.JSON);
-    }
+  // ID is the row number (1-based for first data row)
+  // Sheet row is ID + 1 (because row 1 is header)
+  const sheetRow = wordData.id + 1;
+  
+  if (language === 'kanji') {
+    // Update kanji stats (columns shifted left by 1 since no ID column)
+    sheet.getRange(sheetRow, 4).setValue(wordData.kanji2en.correct);
+    sheet.getRange(sheetRow, 5).setValue(wordData.kanji2en.total);
+    sheet.getRange(sheetRow, 6).setValue(wordData.kanji2en.percentage);
+  } else {
+    // Update dutch stats (columns shifted left by 1 since no ID column)
+    sheet.getRange(sheetRow, 4).setValue(wordData.dutch2en.correct);
+    sheet.getRange(sheetRow, 5).setValue(wordData.dutch2en.total);
+    sheet.getRange(sheetRow, 6).setValue(wordData.dutch2en.percentage);
+    sheet.getRange(sheetRow, 7).setValue(wordData.en2dutch.correct);
+    sheet.getRange(sheetRow, 8).setValue(wordData.en2dutch.total);
+    sheet.getRange(sheetRow, 9).setValue(wordData.en2dutch.percentage);
   }
   
   return ContentService.createTextOutput(JSON.stringify({
-    error: 'Word not found'
+    success: true,
+    data: wordData
   })).setMimeType(ContentService.MimeType.JSON);
 }
 

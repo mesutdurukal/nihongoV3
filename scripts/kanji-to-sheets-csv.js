@@ -7,8 +7,8 @@ const outputPath = path.join(__dirname, '../data/kanji-for-sheets.csv');
 // Read the kanji data
 const data = JSON.parse(fs.readFileSync(kanjiPath, 'utf-8'));
 
-// CSV header
-const header = 'id,kanji,en,category,k2e_correct,k2e_total,k2e_percentage';
+// CSV header (removed 'id' column)
+const header = 'kanji,en,category,k2e_correct,k2e_total,k2e_percentage';
 
 // Convert each entry to CSV row
 const rows = [];
@@ -18,7 +18,6 @@ for (const item of kanjiArray) {
     if (!item.id) continue;
     
     const row = [
-        item.id,
         `"${item.kanji || ''}"`,
         `"${item.meaning || item.en || ''}"`,
         `"${item.category || ''}"`,
@@ -27,11 +26,17 @@ for (const item of kanjiArray) {
         item.kanji2en?.percentage || 0
     ].join(',');
     
-    rows.push(row);
+    rows.push({ id: item.id, row });
 }
 
+// Sort by id
+rows.sort((a, b) => a.id - b.id);
+
+// Extract just the row strings
+const sortedRows = rows.map(r => r.row);
+
 // Combine header and rows
-const csv = [header, ...rows].join('\n');
+const csv = [header, ...sortedRows].join('\n');
 
 // Write to file
 fs.writeFileSync(outputPath, csv);

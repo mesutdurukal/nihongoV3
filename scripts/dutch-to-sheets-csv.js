@@ -7,8 +7,8 @@ const outputPath = path.join(__dirname, '../data/dutch-for-sheets.csv');
 // Read the dutch data
 const data = JSON.parse(fs.readFileSync(dutchPath, 'utf-8'));
 
-// CSV header
-const header = 'id,dutch,en,category,d2e_correct,d2e_total,d2e_percentage,e2d_correct,e2d_total,e2d_percentage';
+// CSV header (removed 'id' column)
+const header = 'dutch,en,category,d2e_correct,d2e_total,d2e_percentage,e2d_correct,e2d_total,e2d_percentage';
 
 // Convert each entry to CSV row
 const rows = [];
@@ -19,7 +19,6 @@ for (const key in data) {
     if (key === 'stats' || !item.id) continue;
     
     const row = [
-        item.id,
         `"${item.dutch || ''}"`,
         `"${item.en || ''}"`,
         `"${item.category || ''}"`,
@@ -31,18 +30,17 @@ for (const key in data) {
         item.en2dutch?.percentage || 0
     ].join(',');
     
-    rows.push(row);
+    rows.push({ id: item.id, row });
 }
 
 // Sort by id
-rows.sort((a, b) => {
-    const idA = parseInt(a.split(',')[0]);
-    const idB = parseInt(b.split(',')[0]);
-    return idA - idB;
-});
+rows.sort((a, b) => a.id - b.id);
+
+// Extract just the row strings
+const sortedRows = rows.map(r => r.row);
 
 // Combine header and rows
-const csv = [header, ...rows].join('\n');
+const csv = [header, ...sortedRows].join('\n');
 
 // Write to file
 fs.writeFileSync(outputPath, csv);
