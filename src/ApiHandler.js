@@ -39,7 +39,6 @@ let sheetsDataCache = null;
 let sortedByLeastAnswered = null;
 let sortedByLeastCorrect = null;
 let currentLanguage = null;
-let currentStatsKey = null;
 
 // Flag to track if Sheets are being loaded in background
 let sheetsLoadingInProgress = false;
@@ -190,7 +189,6 @@ function reindexInBackground(language) {
         }).sort((a, b) => a._ratio - b._ratio);
         
         currentLanguage = language;
-        currentStatsKey = statsKey;
         console.log('✅ Background reindexing complete - next question ready!');
     }, 0);
 }
@@ -223,7 +221,6 @@ async function updateWord(input, language = 'kanji') {
         }
         
         // Fallback to backend
-        const raw = JSON.stringify(input);
         const { id, ...rest } = input;
         const requestOptions = {
             method: "PATCH",

@@ -1,5 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { saveAccessToken, getSavedAccessToken, isAuthenticated } from './GoogleDriveAPI';
+
+// Helper function to save access token
+const saveAccessToken = (token) => {
+    localStorage.setItem('google_access_token', token);
+    localStorage.setItem('google_token_expiry', Date.now() + 3600 * 1000); // 1 hour
+};
 
 const CLIENT_ID = process.env.REACT_APP_GOOGLE_CLIENT_ID;
 const SCOPES = 'https://www.googleapis.com/auth/drive';
@@ -7,52 +12,58 @@ const SCOPES = 'https://www.googleapis.com/auth/drive';
 function GoogleSignIn() {
     const [isSignedIn, setIsSignedIn] = useState(false);
     const [userEmail, setUserEmail] = useState('');
-
     useEffect(() => {
         // Check if already signed in
-        if (isAuthenticated()) {
-            setIsSignedIn(true);
-        }
-
-        // Load Google Sign-In script
         const script = document.createElement('script');
         script.src = 'https://accounts.google.com/gsi/client';
         script.async = true;
         script.defer = true;
-        document.body.appendChild(script);
-
         script.onload = () => {
-            if (window.google && CLIENT_ID) {
-                initializeGoogleSignIn();
-            }
+            initializeGoogleSignIn();
         };
+        document.body.appendChild(script);
 
         return () => {
             document.body.removeChild(script);
         };
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, []);
 
     const initializeGoogleSignIn = () => {
-        window.google.accounts.id.initialize({
-            client_id: CLIENT_ID,
-            callback: handleCredentialResponse,
-        });
+        if (!CLIENT_ID) {
+            console.log('Google Sign-In not configured');
+            return;
+        }
+        
+        if (!window.google) {
+            console.log('Google API not loaded yet');
+            return;
+        }
 
-        // Also initialize OAuth for Drive access
-        const client = window.google.accounts.oauth2.initTokenClient({
-            client_id: CLIENT_ID,
-            scope: SCOPES,
-            callback: (tokenResponse) => {
-                if (tokenResponse && tokenResponse.access_token) {
-                    saveAccessToken(tokenResponse.access_token);
-                    setIsSignedIn(true);
-                    console.log('✅ Signed in to Google Drive');
-                }
-            },
-        });
+        try {
+            window.google.accounts.id.initialize({
+                client_id: CLIENT_ID,
+                callback: handleCredentialResponse,
+            });
 
-        // Store client for later use
-        window.googleOAuthClient = client;
+            // Also initialize OAuth for Drive access
+            const client = window.google.accounts.oauth2.initTokenClient({
+                client_id: CLIENT_ID,
+                scope: SCOPES,
+                callback: (tokenResponse) => {
+                    if (tokenResponse && tokenResponse.access_token) {
+                        saveAccessToken(tokenResponse.access_token);
+                        setIsSignedIn(true);
+                        console.log('✅ Signed in to Google Drive');
+                    }
+                },
+            });
+
+            // Store client for later use
+            window.googleOAuthClient = client;
+        } catch (error) {
+            console.error('Error initializing Google Sign-In:', error);
+        }
     };
 
     const handleCredentialResponse = (response) => {

@@ -334,14 +334,14 @@ function Answer({ question, stats, setQuestion, setStats, nextQuestion, language
         setShowAnimation(false);
     }, [direction, question.id]);
 
-    const handleNext = () => {
+    const handleNext = useCallback(() => {
         setInput('');
         setCorrectWords('');
         setIsCorrect(null);
         setShowResult(false);
         setShowAnimation(false);
         nextQuestion();
-    };
+    }, [nextQuestion]);
 
     // Global keyboard listener for Space key
     useEffect(() => {
@@ -379,7 +379,7 @@ function Answer({ question, stats, setQuestion, setStats, nextQuestion, language
         const normalizeText = (text) => {
             return text.toLowerCase()
                 .replace(/[''`]/g, '')                     // Remove all apostrophes/backticks first
-                .replace(/[.,!?;:'""\-\(\)\[\]]/g, '')     // Remove other punctuation
+                .replace(/[.,!?;:'""[\]()-]/g, '')         // Remove other punctuation
                 .replace(/\s+/g, ' ')                      // Normalize multiple spaces to single space
                 .trim();
         };
