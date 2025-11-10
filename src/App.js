@@ -378,8 +378,8 @@ function Answer({ question, stats, setQuestion, setStats, nextQuestion, language
         // Helper function to remove punctuation and normalize text
         const normalizeText = (text) => {
             return text.toLowerCase()
-                .replace(/[''`]/g, '')                     // Remove all apostrophes/backticks first
-                .replace(/[.,!?;:'""[\]()-]/g, '')         // Remove other punctuation
+                .replace(/['''`]/g, '')                    // Remove all apostrophes/backticks first
+                .replace(/[.,!?;:""[\]()-]/g, '')          // Remove other punctuation
                 .replace(/\s+/g, ' ')                      // Normalize multiple spaces to single space
                 .trim();
         };
