@@ -35,13 +35,20 @@ let sheetsDataCache = null;
 // No CACHE_DURATION needed - cache is always fresh because we update it on every word change
 // Only refetch when cache is empty (initial load, page refresh, or language change)
 
-// Sorted indices for efficient picking (no need to refetch!)
-let sortedByLeastAnswered = null;
-let sortedByLeastCorrect = null;
-let currentLanguage = null;
+// Cache for sorted indices - now includes direction
+let sortedCache = {
+    language: null,
+    direction: null,
+    leastAnswered: null,
+    leastCorrect: null
+};
 
 // Flag to track if Sheets are being loaded in background
 let sheetsLoadingInProgress = false;
+
+// Track recently updated words to prevent race conditions
+let recentlyUpdatedWords = new Map(); // wordId -> timestamp
+const LOCAL_UPDATE_GRACE_PERIOD = 10000; // 10 seconds
 
 // LocalStorage cache keys
 const CACHE_KEY_PREFIX = 'nihongo_sheets_cache_';
@@ -86,6 +93,61 @@ function saveCacheToStorage(language, data) {
     }
 }
 
+// Clean up old entries from recently updated words map
+function cleanupRecentUpdates() {
+    const now = Date.now();
+    const toDelete = [];
+    
+    recentlyUpdatedWords.forEach((updateTime, wordId) => {
+        if (now - updateTime > LOCAL_UPDATE_GRACE_PERIOD) {
+            toDelete.push(wordId);
+        }
+    });
+    
+    toDelete.forEach(wordId => recentlyUpdatedWords.delete(wordId));
+    
+    if (toDelete.length > 0) {
+        console.log(`🧹 Cleaned up ${toDelete.length} old update tracking entries`);
+    }
+}
+
+// Smart merge: combine Sheets data with local updates
+function mergeWithLocalUpdates(sheetsData, localCache, language) {
+    if (!localCache) return sheetsData;
+    
+    const now = Date.now();
+    const statsKey = language === 'dutch' ? 'dutch2en' : 'kanji2en';
+    const merged = { ...sheetsData };
+    let preservedCount = 0;
+    
+    // For each recently updated word
+    recentlyUpdatedWords.forEach((updateTime, wordId) => {
+        if (now - updateTime < LOCAL_UPDATE_GRACE_PERIOD) {
+            const key = (wordId - 1).toString();
+            const localWord = localCache[key];
+            const sheetsWord = sheetsData[key];
+            
+            if (localWord && sheetsWord) {
+                // Keep whichever has higher total (more recent)
+                const localTotal = localWord[statsKey]?.total || 0;
+                const sheetsTotal = sheetsWord[statsKey]?.total || 0;
+                
+                if (localTotal > sheetsTotal) {
+                    console.log(`🔄 Preserving local update for word ${wordId} (local: ${localTotal}, sheets: ${sheetsTotal})`);
+                    merged[key] = localWord;
+                    preservedCount++;
+                }
+            }
+        }
+    });
+    
+    if (preservedCount > 0) {
+        console.log(`✅ Preserved ${preservedCount} recent local updates during merge`);
+    }
+    
+    return merged;
+}
+
 // Load Sheets data in background (non-blocking)
 function loadSheetsInBackground(language) {
     if (sheetsLoadingInProgress || !isSheetsConfigured()) {
@@ -98,9 +160,15 @@ function loadSheetsInBackground(language) {
     readFromSheets(language)
         .then(sheetsData => {
             if (sheetsData) {
-                sheetsDataCache = sheetsData;
-                saveCacheToStorage(language, sheetsData);
+                // Smart merge: preserve recently updated words
+                const mergedData = mergeWithLocalUpdates(sheetsData, sheetsDataCache, language);
+                sheetsDataCache = mergedData;
+                saveCacheToStorage(language, mergedData);
                 console.log('✅ Background Sheets load complete');
+                
+                // Clean up old tracking entries
+                cleanupRecentUpdates();
+                
                 reindexInBackground(language);
             }
         })
@@ -164,23 +232,23 @@ async function updateStats(input, language = 'kanji') {
 }
 
 // Helper function to reindex sorted arrays in background
-function reindexInBackground(language) {
-    const statsKey = language === 'dutch' ? 'dutch2en' : 'kanji2en';
+function reindexInBackground(language, direction = 'dutch2en') {
+    const statsKey = language === 'dutch' ? direction : 'kanji2en';
     
     if (!sheetsDataCache) return;
     
     // Use setTimeout to make it async and non-blocking
     setTimeout(() => {
-        console.log('🔄 Reindexing in background while user thinks...');
+        console.log(`🔄 Reindexing in background for ${language} (${direction})...`);
         const questions = Object.values(sheetsDataCache).filter(item => item && item.id);
         
         // Sort by least answered
-        sortedByLeastAnswered = [...questions].sort((a, b) => 
+        const leastAnswered = [...questions].sort((a, b) => 
             (a[statsKey]?.total || 0) - (b[statsKey]?.total || 0)
         );
         
         // Sort by least correct
-        sortedByLeastCorrect = [...questions].map(q => {
+        const leastCorrect = [...questions].map(q => {
             const stats = q[statsKey] || { correct: 0, total: 0 };
             return {
                 ...q,
@@ -188,18 +256,28 @@ function reindexInBackground(language) {
             };
         }).sort((a, b) => a._ratio - b._ratio);
         
-        currentLanguage = language;
+        // Update cache with direction-specific sorting
+        sortedCache = {
+            language: language,
+            direction: direction,
+            leastAnswered: leastAnswered,
+            leastCorrect: leastCorrect
+        };
+        
         console.log('✅ Background reindexing complete - next question ready!');
     }, 0);
 }
 
-async function updateWord(input, language = 'kanji') {
+async function updateWord(input, language = 'kanji', direction = 'dutch2en') {
     try {
         // Try to update Google Sheets first if configured
         if (isSheetsConfigured()) {
             const result = await updateWordInSheets(input, language);
             if (result && result.success) {
                 console.log('✅ Updated word in Google Sheets');
+                
+                // Track this word as recently updated to prevent race conditions
+                recentlyUpdatedWords.set(input.id, Date.now());
                 
                 // Update the cached word data to prevent stale stats
                 if (sheetsDataCache) {
@@ -210,8 +288,8 @@ async function updateWord(input, language = 'kanji') {
                         // Also update localStorage cache
                         saveCacheToStorage(language, sheetsDataCache);
                         
-                        // Reindex in background while user thinks about next question
-                        reindexInBackground(language);
+                        // Reindex in background with current direction
+                        reindexInBackground(language, direction);
                     }
                 }
                 
@@ -260,12 +338,12 @@ async function fetchStats(language = 'kanji') {
     }
 }
 
-async function pickQuestion(mode, language = 'kanji') {
+async function pickQuestion(mode, language = 'kanji', direction = 'dutch2en') {
     try {
         let questions;
         
         // Strategy 1: Check memory cache first (instant)
-        if (sheetsDataCache && currentLanguage === language) {
+        if (sheetsDataCache && sortedCache.language === language) {
             questions = Object.values(sheetsDataCache).filter(item => item && item.id);
             console.log('⚡ Using memory cache (instant!)');
         }
@@ -277,8 +355,7 @@ async function pickQuestion(mode, language = 'kanji') {
             if (cachedData) {
                 sheetsDataCache = cachedData;
                 questions = Object.values(cachedData).filter(item => item && item.id);
-                currentLanguage = language;
-                reindexInBackground(language);
+                reindexInBackground(language, direction);
             }
             
             // Always refresh Sheets in background to get latest data
@@ -291,7 +368,7 @@ async function pickQuestion(mode, language = 'kanji') {
             console.log('🚀 Using backend API (fast path)');
             const response = await fetch(hostIp + 'api/' + endpoint);
             questions = await response.json();
-            reindexInBackground(language);
+            reindexInBackground(language, direction);
             
             // Load Sheets in background for future requests
             if (isSheetsConfigured()) {
@@ -299,10 +376,10 @@ async function pickQuestion(mode, language = 'kanji') {
             }
         }
         
-        console.log(`Picking question in mode: ${mode} for language: ${language}`);
+        console.log(`Picking question in mode: ${mode} for language: ${language} (direction: ${direction})`);
         
-        // Determine the stats key based on language
-        const statsKey = language === 'dutch' ? 'dutch2en' : 'kanji2en';
+        // Determine the stats key based on language and direction
+        const statsKey = language === 'dutch' ? direction : 'kanji2en';
         
         if (mode === 'random') {
             // For random mode, just pick a random question directly
@@ -310,21 +387,31 @@ async function pickQuestion(mode, language = 'kanji') {
             return JSON.parse(JSON.stringify(questions[randomIndex]));
         }
         
-        // Check if sorted arrays are ready (should be from background reindex)
-        if (mode === 'leastAnswered' && sortedByLeastAnswered && currentLanguage === language) {
+        // Check if sorted arrays are ready and match current language/direction
+        const cacheValid = sortedCache.language === language && sortedCache.direction === direction;
+        
+        if (mode === 'leastAnswered' && sortedCache.leastAnswered && cacheValid) {
             // Use pre-sorted array - instant! ⚡
             console.log('⚡ Using pre-sorted array (instant pick!)');
-            const minTotal = sortedByLeastAnswered[0]?.[statsKey]?.total || 0;
-            const leastAnswered = sortedByLeastAnswered.filter(q => 
+            
+            // Filter out recently updated words to prevent immediate repeats
+            const now = Date.now();
+            const availableQuestions = sortedCache.leastAnswered.filter(q => {
+                const updateTime = recentlyUpdatedWords.get(q.id);
+                return !updateTime || (now - updateTime > LOCAL_UPDATE_GRACE_PERIOD);
+            });
+            
+            const minTotal = availableQuestions[0]?.[statsKey]?.total || 0;
+            const leastAnswered = availableQuestions.filter(q => 
                 (q[statsKey]?.total || 0) === minTotal
             );
             return JSON.parse(JSON.stringify(leastAnswered[Math.floor(Math.random() * leastAnswered.length)]));
             
-        } else if (mode === 'leastCorrect' && sortedByLeastCorrect && currentLanguage === language) {
+        } else if (mode === 'leastCorrect' && sortedCache.leastCorrect && cacheValid) {
             // Use pre-sorted array - instant! ⚡
             console.log('⚡ Using pre-sorted array (instant pick!)');
-            const minRatio = sortedByLeastCorrect[0]?._ratio || 0;
-            const leastCorrect = sortedByLeastCorrect.filter(q => q._ratio === minRatio);
+            const minRatio = sortedCache.leastCorrect[0]?._ratio || 0;
+            const leastCorrect = sortedCache.leastCorrect.filter(q => q._ratio === minRatio);
             
             // Pick and remove temporary ratio field
             const selected = leastCorrect[Math.floor(Math.random() * leastCorrect.length)];
@@ -332,16 +419,26 @@ async function pickQuestion(mode, language = 'kanji') {
             return JSON.parse(JSON.stringify(questionWithoutRatio));
         }
         
-        // Fallback: sort on-demand if arrays not ready yet (first question only)
-        console.log('⏳ Sorting on-demand (first question)...');
+        // Fallback: sort on-demand if arrays not ready or direction changed
+        console.log(`⏳ Sorting on-demand (cache invalid or first question)...`);
+        
+        // Trigger background reindex for next time
+        reindexInBackground(language, direction);
         let filteredQuestions = [...questions];
         
         if (mode === 'leastAnswered') {
-            filteredQuestions.sort((a, b) => 
+            // Filter out recently updated words to prevent immediate repeats
+            const now = Date.now();
+            const availableQuestions = filteredQuestions.filter(q => {
+                const updateTime = recentlyUpdatedWords.get(q.id);
+                return !updateTime || (now - updateTime > LOCAL_UPDATE_GRACE_PERIOD);
+            });
+            
+            availableQuestions.sort((a, b) => 
                 (a[statsKey]?.total || 0) - (b[statsKey]?.total || 0)
             );
-            const minTotal = filteredQuestions[0]?.[statsKey]?.total || 0;
-            const leastAnswered = filteredQuestions.filter(q => 
+            const minTotal = availableQuestions[0]?.[statsKey]?.total || 0;
+            const leastAnswered = availableQuestions.filter(q => 
                 (q[statsKey]?.total || 0) === minTotal
             );
             return JSON.parse(JSON.stringify(leastAnswered[Math.floor(Math.random() * leastAnswered.length)]));

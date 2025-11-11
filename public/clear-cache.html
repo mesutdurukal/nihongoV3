@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Clear Cache - Nihongo App</title>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #333;
+            margin-top: 0;
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 4px;
+            font-size: 16px;
+            cursor: pointer;
+            margin-top: 20px;
+        }
+        button:hover {
+            background: #0056b3;
+        }
+        .message {
+            margin-top: 20px;
+            padding: 12px;
+            border-radius: 4px;
+            display: none;
+        }
+        .success {
+            background: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        .info {
+            background: #d1ecf1;
+            color: #0c5460;
+            border: 1px solid #bee5eb;
+        }
+        code {
+            background: #f4f4f4;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: monospace;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🗑️ Clear Cache</h1>
+        <p>This page will clear the old localStorage cache that is no longer used by the app.</p>
+        
+        <div class="info message" id="info">
+            <strong>Note:</strong> localStorage cache has been disabled in the latest version. 
+            The app now always fetches fresh data from Google Sheets.
+        </div>
+        
+        <button onclick="clearCache()">Clear Old Cache</button>
+        
+        <div class="success message" id="success">
+            ✅ Cache cleared successfully! You can close this page and return to the app.
+        </div>
+    </div>
+
+    <script>
+        // Show info message
+        document.getElementById('info').style.display = 'block';
+
+        function clearCache() {
+            // Clear old localStorage cache keys
+            const keysToRemove = [
+                'nihongo_sheets_cache_dutch',
+                'nihongo_sheets_cache_kanji',
+                'nihongo_sheets_timestamp_dutch',
+                'nihongo_sheets_timestamp_kanji'
+            ];
+            
+            let clearedCount = 0;
+            keysToRemove.forEach(key => {
+                if (localStorage.getItem(key)) {
+                    localStorage.removeItem(key);
+                    clearedCount++;
+                }
+            });
+            
+            // Show success message
+            const successMsg = document.getElementById('success');
+            if (clearedCount > 0) {
+                successMsg.textContent = `✅ Cleared ${clearedCount} cache entries! You can close this page and return to the app.`;
+            } else {
+                successMsg.textContent = '✅ No cache found (already cleared). You can close this page.';
+            }
+            successMsg.style.display = 'block';
+            
+            console.log('Cleared cache keys:', keysToRemove);
+        }
+    </script>
+</body>
+</html>

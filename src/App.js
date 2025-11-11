@@ -378,7 +378,8 @@ function Answer({ question, stats, setQuestion, setStats, nextQuestion, language
         // Helper function to remove punctuation and normalize text
         const normalizeText = (text) => {
             return text.toLowerCase()
-                .replace(/['''`]/g, '')                    // Remove all apostrophes/backticks first
+                // Remove all apostrophe/quote variants: ' ' ' ʼ ` ´ ʻ ʽ ˊ ˋ ′ ″
+                .replace(/[\u0027\u2018\u2019\u201A\u201B\u02BC\u0060\u00B4\u02BB\u02BD\u02CA\u02CB\u2032\u2033\u2034\u2035\u2036\u2037\u2039\u203A]/g, '')
                 .replace(/[.,!?;:""[\]()-]/g, '')          // Remove other punctuation
                 .replace(/\s+/g, ' ')                      // Normalize multiple spaces to single space
                 .trim();
@@ -444,7 +445,7 @@ function Answer({ question, stats, setQuestion, setStats, nextQuestion, language
         // Update backend
         const [statsResult, wordResult] = await Promise.all([
             updateStats(updatedStats, language),
-            updateWord(currentQ, language)
+            updateWord(currentQ, language, direction)
         ]);
         console.log('✅ Backend update complete - Stats:', statsResult ? '✓' : '✗', '| Word:', wordResult ? '✓' : '✗');
     };
@@ -559,7 +560,7 @@ function Root() {
     });
     
     const [question, setQuestion] = useState({});
-    const [questionMode, setQuestionMode] = useState(0);
+    const [questionMode, setQuestionMode] = useState(2); // Start with 'random' mode (index 2)
     const [isLoading, setIsLoading] = useState(true);
     const [language, setLanguage] = useState('dutch');
     const [direction, setDirection] = useState('dutch2en'); // dutch2en or en2dutch
@@ -601,7 +602,7 @@ function Root() {
             
             const currentMode = pickMode[modeIndex];
             console.log('🎯 Getting question with mode:', currentMode, '(index:', modeIndex, ')');
-            const nextQ = await pickQuestion(currentMode, language);
+            const nextQ = await pickQuestion(currentMode, language, direction);
             if (nextQ) {
                 setQuestion(nextQ);
             }
@@ -610,7 +611,7 @@ function Root() {
         } finally {
             setIsLoading(false);
         }
-    }, [questionMode, language, prefetchedQuestion]);
+    }, [questionMode, language, direction, prefetchedQuestion]);
 
     const handleNextQuestion = async () => {
         setIsLoading(true);
@@ -628,7 +629,7 @@ function Root() {
                 try {
                     const nextMode = (questionMode + 1) % pickMode.length;
                     console.log('🔮 Prefetching next question in background...');
-                    const nextQ = await pickQuestion(pickMode[nextMode], language);
+                    const nextQ = await pickQuestion(pickMode[nextMode], language, direction);
                     if (nextQ) {
                         setPrefetchedQuestion(nextQ);
                         console.log('✅ Next question prefetched and ready');
@@ -642,7 +643,7 @@ function Root() {
             const timer = setTimeout(prefetchNext, 500);
             return () => clearTimeout(timer);
         }
-    }, [question, questionMode, language, prefetchedQuestion]);
+    }, [question, questionMode, language, direction, prefetchedQuestion]);
 
     useEffect(() => {
         const initialize = async () => {
@@ -651,7 +652,7 @@ function Root() {
                 
                 // Fetch first question using 'random' mode (fastest - no sorting)
                 // This gets the UI ready ASAP
-                const firstQuestionPromise = pickQuestion('random', language);
+                const firstQuestionPromise = pickQuestion('random', language, direction);
                 
                 // Fetch stats in parallel
                 const statsPromise = fetchStats(language);
@@ -682,6 +683,15 @@ function Root() {
         initialize();
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [language]); // Re-initialize when language changes
+    
+    // Invalidate prefetched question when direction changes
+    useEffect(() => {
+        if (prefetchedQuestion) {
+            console.log('🔄 Direction changed, invalidating prefetched question');
+            setPrefetchedQuestion(null);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [direction]);
 
     if (isLoading) {
         return (
