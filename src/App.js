@@ -565,6 +565,7 @@ function Root() {
     const [language, setLanguage] = useState('dutch');
     const [direction, setDirection] = useState('dutch2en'); // dutch2en or en2dutch
     const [prefetchedQuestion, setPrefetchedQuestion] = useState(null);
+    const [displayText, setDisplayText] = useState(''); // Store the selected display text
 
     const updateStatsCallBack = useCallback(async () => {
         try {
@@ -692,6 +693,26 @@ function Root() {
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [direction]);
+    
+    // Compute display text once when question or direction changes
+    useEffect(() => {
+        if (question && question.id) {
+            let text;
+            if (language === 'dutch') {
+                text = direction === 'dutch2en' ? question.dutch : question.en;
+            } else {
+                text = question.kanji;
+            }
+            
+            // If there are multiple meanings separated by comma, pick one randomly
+            if (text && text.includes(',')) {
+                const options = text.split(',').map(opt => opt.trim());
+                text = options[Math.floor(Math.random() * options.length)];
+            }
+            
+            setDisplayText(text || '');
+        }
+    }, [question, question.id, direction, language]);
 
     if (isLoading) {
         return (
@@ -770,22 +791,7 @@ function Root() {
                     <CategoryBadge>{question.category}</CategoryBadge>
                 )}
                 <QuestionText>
-                    {(() => {
-                        let displayText;
-                        if (language === 'dutch') {
-                            displayText = direction === 'dutch2en' ? question.dutch : question.en;
-                        } else {
-                            displayText = question.kanji;
-                        }
-                        
-                        // If there are multiple meanings separated by comma, pick one randomly
-                        if (displayText && displayText.includes(',')) {
-                            const options = displayText.split(',').map(opt => opt.trim());
-                            displayText = options[Math.floor(Math.random() * options.length)];
-                        }
-                        
-                        return displayText;
-                    })()} {question.kanji || question.dutch || question.en ? '' : '?'}
+                    {displayText || '?'}
                     {language === 'dutch' && direction === 'dutch2en' && question.dutch && (
                         <SpeakerIcon text={question.dutch.split(',')[0].trim()} language="nl-BE" />
                     )}
