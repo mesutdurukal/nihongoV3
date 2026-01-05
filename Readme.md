@@ -35,13 +35,11 @@ A comprehensive language learning application with React frontend and JSON serve
 
 ### Running the Application
 
-1. Start both the backend and frontend with a single command:
+1. For development with Google Sheets integration (recommended):
    ```bash
-   npm start
+   npm run start:react
    ```
-   This will concurrently start:
-   - Custom Node.js backend server (port 8080)
-   - React development server (port 3000)
+   This will start the React development server (port 3000) connected to Google Sheets.
 
 2. Open [http://localhost:3000](http://localhost:3000) in your browser.
 
