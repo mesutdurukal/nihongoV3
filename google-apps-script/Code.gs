@@ -115,21 +115,32 @@ function getData(ss, language) {
 }
 
 function getStats(ss, language) {
-  const sheetName = language === 'kanji' ? KANJI_STATS_SHEET : DUTCH_STATS_SHEET;
-  const sheet = ss.getSheetByName(sheetName);
-  const data = sheet.getDataRange().getValues();
+  const statsSheetName = language === 'kanji' ? KANJI_STATS_SHEET : DUTCH_STATS_SHEET;
+  const dataSheetName = language === 'kanji' ? KANJI_SHEET : DUTCH_SHEET;
   
+  const statsSheet = ss.getSheetByName(statsSheetName);
+  const dataSheet = ss.getSheetByName(dataSheetName);
+  const data = statsSheet.getDataRange().getValues();
+  
+  // Calculate size dynamically from vocab sheet (minus header row)
+  const vocabSize = dataSheet.getLastRow() - 1;
+  
+  // Data layout (0-indexed):
+  // Row 0: Headers (Label, Value, Total, Record)
+  // Row 1: Size row
+  // Row 2: Global row
+  // Row 3: Local row
   const result = {
-    size: data[0][1] || 100,
+    size: vocabSize,
     global: {
-      correct: data[1][1] || 0,
-      total: data[1][2] || 0,
-      record: data[1][3] || 0
-    },
-    local: {
       correct: data[2][1] || 0,
       total: data[2][2] || 0,
       record: data[2][3] || 0
+    },
+    local: {
+      correct: data[3][1] || 0,
+      total: data[3][2] || 0,
+      record: data[3][3] || 0
     }
   };
   
@@ -222,20 +233,21 @@ function updateStats(ss, statsData, language) {
   const sheetName = language === 'kanji' ? KANJI_STATS_SHEET : DUTCH_STATS_SHEET;
   const sheet = ss.getSheetByName(sheetName);
   
-  // Update size (row 1)
-  if (statsData.size) {
-    sheet.getRange(1, 2).setValue(statsData.size);
-  }
+  // Sheet layout (1-indexed for getRange):
+  // Row 1: Headers (Label, Value, Total, Record)
+  // Row 2: Size row (not updated - calculated dynamically)
+  // Row 3: Global row
+  // Row 4: Local row
   
-  // Update global stats (row 2)
-  sheet.getRange(2, 2).setValue(statsData.global.correct);
-  sheet.getRange(2, 3).setValue(statsData.global.total);
-  sheet.getRange(2, 4).setValue(statsData.global.record);
+  // Update global stats (row 3)
+  sheet.getRange(3, 2).setValue(statsData.global.correct);
+  sheet.getRange(3, 3).setValue(statsData.global.total);
+  sheet.getRange(3, 4).setValue(statsData.global.record);
   
-  // Update local stats (row 3)
-  sheet.getRange(3, 2).setValue(statsData.local.correct);
-  sheet.getRange(3, 3).setValue(statsData.local.total);
-  sheet.getRange(3, 4).setValue(statsData.local.record);
+  // Update local stats (row 4)
+  sheet.getRange(4, 2).setValue(statsData.local.correct);
+  sheet.getRange(4, 3).setValue(statsData.local.total);
+  sheet.getRange(4, 4).setValue(statsData.local.record);
   
   return ContentService.createTextOutput(JSON.stringify({
     success: true,

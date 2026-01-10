@@ -262,7 +262,7 @@ const LanguageButton = styled(Button)`
 
 function Stats({ stats, onReset }) {
     const safeStats = {
-        size: stats?.size || 0,
+        size: typeof stats?.size === 'number' ? stats.size : 0,
         global: stats?.global || { correct: 0, total: 0, record: 0 },
         local: stats?.local || { correct: 0, total: 0, record: 0 }
     };
