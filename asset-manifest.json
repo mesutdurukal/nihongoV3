@@ -1,10 +1,10 @@
 {
   "files": {
-    "main.js": "/nihongoV3/static/js/main.a7ec9314.js",
+    "main.js": "/nihongoV3/static/js/main.cfbc7adc.js",
     "index.html": "/nihongoV3/index.html",
-    "main.a7ec9314.js.map": "/nihongoV3/static/js/main.a7ec9314.js.map"
+    "main.cfbc7adc.js.map": "/nihongoV3/static/js/main.cfbc7adc.js.map"
   },
   "entrypoints": [
-    "static/js/main.a7ec9314.js"
+    "static/js/main.cfbc7adc.js"
   ]
 }
