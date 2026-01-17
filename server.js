@@ -12,9 +12,36 @@ const middlewares = jsonServer.defaults({
 const kanjiPath = path.join(__dirname, 'data', 'kanji.json');
 const dutchPath = path.join(__dirname, 'data', 'dutch.json');
 
-// Load data
-let kanjiData = JSON.parse(fs.readFileSync(kanjiPath, 'utf-8'));
-let dutchData = JSON.parse(fs.readFileSync(dutchPath, 'utf-8'));
+// Default empty data structure
+const defaultData = {
+  stats: { size: 0, global: { correct: 0, total: 0, record: 0 }, local: { correct: 0, total: 0, record: 0 } },
+  kanji: [],
+  dutch: []
+};
+
+// Load data safely (data may come from Google Drive instead of local files)
+let kanjiData = defaultData;
+let dutchData = defaultData;
+
+try {
+  if (fs.existsSync(kanjiPath)) {
+    kanjiData = JSON.parse(fs.readFileSync(kanjiPath, 'utf-8'));
+  } else {
+    console.log('⚠️ kanji.json not found - using Google Sheets as primary data source');
+  }
+} catch (e) {
+  console.log('⚠️ Error loading kanji.json:', e.message);
+}
+
+try {
+  if (fs.existsSync(dutchPath)) {
+    dutchData = JSON.parse(fs.readFileSync(dutchPath, 'utf-8'));
+  } else {
+    console.log('⚠️ dutch.json not found - using Google Sheets as primary data source');
+  }
+} catch (e) {
+  console.log('⚠️ Error loading dutch.json:', e.message);
+}
 
 // CORS configuration
 const allowedOrigins = [
